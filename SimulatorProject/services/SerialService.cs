@@ -37,7 +37,7 @@ namespace SimulatorProject.services
                     {
                         string request = _serialPort.ReadLine().Trim();
 
-                        if (request == "GET_TIME")
+                        if (request == "Get_Distance")
                         {
                             string time = _timer.GetElapsedTime();
                             _serialPort.WriteLine(time);

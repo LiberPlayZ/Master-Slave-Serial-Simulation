@@ -17,7 +17,7 @@ namespace SimulatorProject.config
             var max_range = ParserMapper.DoubleParse(Environment.GetEnvironmentVariable("MAX_RANGE"));
             var min_range = ParserMapper.DoubleParse(Environment.GetEnvironmentVariable("MIN_RANGE"));
             var port_name = Environment.GetEnvironmentVariable("PORT_NAME");
-            var baud_rate = ParserMapper.DoubleParse(Environment.GetEnvironmentVariable("Baud_Rate"));
+            var baud_rate = ParserMapper.IntParse(Environment.GetEnvironmentVariable("BAUD_RATE"));
             if (!max_range.HasValue || !min_range.HasValue || !baud_rate.HasValue || port_name == null || port_name.Trim() == "")
             {
                 Console.WriteLine(" error load env types ");
