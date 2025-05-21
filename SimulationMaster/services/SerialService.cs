@@ -23,7 +23,6 @@ namespace SimulationMaster.services
             {
                 this._serialPort.Open();
                 Console.WriteLine("Sending time request to slave...");
-                System.Console.WriteLine(this._getDistanceCommand);
                 this._serialPort.WriteLine(this._getDistanceCommand);
 
                 string response = this._serialPort.ReadLine();

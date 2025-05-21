@@ -12,6 +12,8 @@ namespace SimulatorProject.services
         private readonly SerialPort _serialPort;
         private readonly TimerService _timer;
 
+        private readonly string _getDistance;
+
         public SerialService(TimerService timer, ConfigData config)
         {
             _timer = timer;
@@ -21,6 +23,7 @@ namespace SimulatorProject.services
                 ReadTimeout = 5000,
                 WriteTimeout = 5000
             };
+            this._getDistance = config.GetDistanceCommand.Trim();
         }
 
         public void Start()
@@ -37,7 +40,7 @@ namespace SimulatorProject.services
                     {
                         string request = _serialPort.ReadLine().Trim();
 
-                        if (request == "Get_Distance")
+                        if (request == this._getDistance)
                         {
                             string time = _timer.GetElapsedTime();
                             _serialPort.WriteLine(time);

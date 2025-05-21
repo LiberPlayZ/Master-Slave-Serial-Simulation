@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using dotenv.net;
+using SharedConfig;
 
-using SimulationMaster.utild.mappers;
+
 
 namespace SimulationMaster.config
 {
@@ -13,12 +14,13 @@ namespace SimulationMaster.config
 
         public static ConfigData? LoadConfig()
         {
-            DotEnv.Load();
+            SharedConfig.ConfigData.Load();
+
             // load env
 
-            var port_name = Environment.GetEnvironmentVariable("PORT_NAME");
-            var baud_rate = ParserMapper.IntParse(Environment.GetEnvironmentVariable("BAUD_RATE"));
-            var get_distance_command = Environment.GetEnvironmentVariable("GET_DISTANCE");
+            var port_name = SharedConfig.ConfigData.Get("PORT_NAME");
+            var baud_rate = SharedConfig.ConfigData.GetInt(SharedConfig.ConfigData.Get("BAUD_RATE"));
+            var get_distance_command = SharedConfig.ConfigData.Get("GET_DISTANCE_COMMAND");
             if (!baud_rate.HasValue || port_name == null || port_name.Trim() == ""
              || get_distance_command == null || get_distance_command.Trim() == "")
             {

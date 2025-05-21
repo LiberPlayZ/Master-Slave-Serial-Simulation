@@ -14,4 +14,8 @@
     <PackageReference Include="System.IO.Ports" Version="9.0.5" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SharedConfig\SharedConfig.csproj" />
+  </ItemGroup>
+
 </Project>
