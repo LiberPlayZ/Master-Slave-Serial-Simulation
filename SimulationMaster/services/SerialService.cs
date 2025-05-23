@@ -12,21 +12,61 @@ namespace SimulationMaster.services
         private readonly string _getDistanceCommand;
         public SerialService(ConfigData config)
         {
-            this._serialPort = new SerialPort(config.PortName.Trim(), config.BaudRate);
+            this._serialPort = new SerialPort(config.PortName.Trim(), config.BaudRate)
+            {
+                NewLine = "\n",
+                ReadTimeout = 5000,
+                WriteTimeout = 5000
+            };
             this._getDistanceCommand = config.GetDistanceCommand.Trim();
 
         }
 
-        public void Start()
+        private string GenerateAnchorId()
+        {
+            var rand = new Random();
+            return rand.Next(3).ToString();
+        }
+
+        private string CreateRequest(string anchorId)
+        {
+            return $"{this._getDistanceCommand}:{anchorId}";
+        }
+
+        private async Task Send()
+        {
+            Console.WriteLine("Sending time request to slave...");
+            this._serialPort.WriteLine(this.CreateRequest(this.GenerateAnchorId()));
+
+
+            await Task.Delay(TimeSpan.FromSeconds(5));
+        }
+
+        private static void OnDataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            var port = (SerialPort)sender;
+            try
+            {
+                string response = port.ReadLine();
+
+                Console.WriteLine($"[Master] Received: {response}");
+
+            }
+            catch (TimeoutException) { }
+        }
+
+        public async Task Start()
         {
             try
             {
                 this._serialPort.Open();
-                Console.WriteLine("Sending time request to slave...");
-                this._serialPort.WriteLine(this._getDistanceCommand);
+                this._serialPort.DataReceived += OnDataReceived;
+                while (true)
+                {
+                    await this.Send();
 
-                string response = this._serialPort.ReadLine();
-                Console.WriteLine($"Received time from slave: {response}");
+                }
+
             }
             catch (Exception ex)
             {

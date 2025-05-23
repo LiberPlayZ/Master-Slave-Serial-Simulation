@@ -2,9 +2,10 @@
 using SimulationMaster.services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Threading.Tasks;
 class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         var config = ConfigLoader.LoadConfig();
         if (config != null)
@@ -18,7 +19,7 @@ class Program
                 })
                 .Build();
             var serialService = host.Services.GetRequiredService<SerialService>();
-            serialService.Start();
+            await serialService.Start();
 
 
         }

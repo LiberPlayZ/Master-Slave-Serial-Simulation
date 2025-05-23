@@ -15,6 +15,7 @@ class Program
                     services.AddSingleton(config);
                     services.AddSingleton<TimerService>();
                     services.AddSingleton<SerialService>();
+                    services.AddSingleton<SimulationService>();
                 })
                 .Build();
 

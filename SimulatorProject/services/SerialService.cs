@@ -12,11 +12,16 @@ namespace SimulatorProject.services
         private readonly SerialPort _serialPort;
         private readonly TimerService _timer;
 
+        private readonly SimulationService _simulationService;
+
         private readonly string _getDistance;
 
-        public SerialService(TimerService timer, ConfigData config)
+        private readonly double _responseDelay;
+
+        public SerialService(TimerService timer, SimulationService simulationService, ConfigData config)
         {
             _timer = timer;
+            this._simulationService = simulationService;
             _serialPort = new SerialPort(config.PortName.Trim(), config.BaudRate)
             {
                 NewLine = "\n",
@@ -24,6 +29,17 @@ namespace SimulatorProject.services
                 WriteTimeout = 5000
             };
             this._getDistance = config.GetDistanceCommand.Trim();
+            this._responseDelay = config.ResponseDelay;
+        }
+
+        private double GetDistance(string id)
+        {
+            var anchor = this._simulationService.helicopter.GetAnchorById(id);
+            if (anchor != null)
+            {
+                return this._simulationService.CalaculateDistance(anchor);
+            }
+            return 0.0;
         }
 
         public void Start()
@@ -32,32 +48,39 @@ namespace SimulatorProject.services
             {
                 _timer.Start();
                 _serialPort.Open();
-                Console.WriteLine("SerialTimerServer is running and waiting for requests...");
-
-                while (true)
+                _serialPort.DataReceived += async (sender, e) =>
                 {
+                    var sp = (SerialPort)sender;
                     try
                     {
                         string request = _serialPort.ReadLine().Trim();
-
-                        if (request == this._getDistance)
+                        Console.WriteLine($"Slave received: {request}");
+                        if (request.StartsWith(this._getDistance + ":"))
                         {
+                            string[] data = request.Split(':');
+
                             string time = _timer.GetElapsedTime();
-                            _serialPort.WriteLine(time);
+                            double distance = this.GetDistance(data[1]);
+
+
+
+                            await Task.Delay(TimeSpan.FromMilliseconds(this._responseDelay));
+
+                            sp.WriteLine(time);
                             Console.WriteLine($"Sent: {time}");
+
+
                         }
                         else
                         {
-                            _serialPort.WriteLine("UNKNOWN_COMMAND");
+                            sp.WriteLine("UNKNOWN_COMMAND");
                         }
-                    }
-                    catch (TimeoutException)
-                    {
 
                     }
-                    Thread.Sleep(100);
-                }
-
+                    catch (TimeoutException) { }
+                };
+                Console.WriteLine("Slave is listening...");
+                Console.ReadLine();
 
             }
             catch (Exception ex)

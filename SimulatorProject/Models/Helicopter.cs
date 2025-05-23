@@ -16,5 +16,17 @@ namespace SimulatorProject.Models
             this.center = new Point3D();
         }
 
+        public Anchor? GetAnchorById(string id)
+        {
+            foreach (var anchor in this.anchors)
+            {
+                if (anchor.Id == id)
+                {
+                    return anchor;
+                }
+            }
+            return null;
+        }
+
     }
 }

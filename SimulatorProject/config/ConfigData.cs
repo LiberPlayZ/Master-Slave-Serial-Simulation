@@ -16,14 +16,17 @@ namespace SimulatorProject.config
 
         public string GetDistanceCommand { get; set; }
 
+        public double ResponseDelay { get; set; }
 
-        public ConfigData(double max, double min, string pn, int baudRate, string get_distance_command)
+
+        public ConfigData(double max, double min, string pn, int baudRate, string get_distance_command, double delay)
         {
             this.MaxRange = max;
             this.MaxRange = min;
             this.PortName = pn;
             this.BaudRate = baudRate;
             this.GetDistanceCommand = get_distance_command;
+            this.ResponseDelay = delay;
         }
 
     }
