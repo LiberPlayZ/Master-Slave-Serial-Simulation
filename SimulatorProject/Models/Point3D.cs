@@ -14,5 +14,10 @@ namespace SimulatorProject.Models
         public double Y { get; set; } = y;
 
         public double Z { get; set; } = z;
+
+        public override string ToString()
+        {
+            return $"({this.X},{this.Y},{this.Z})";
+        }
     }
 }

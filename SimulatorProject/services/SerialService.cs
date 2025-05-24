@@ -32,15 +32,7 @@ namespace SimulatorProject.services
             this._responseDelay = config.ResponseDelay;
         }
 
-        private double GetDistance(string id)
-        {
-            var anchor = this._simulationService.helicopter.GetAnchorById(id);
-            if (anchor != null)
-            {
-                return this._simulationService.CalaculateDistance(anchor);
-            }
-            return 0.0;
-        }
+
 
         public void Start()
         {
@@ -52,7 +44,7 @@ namespace SimulatorProject.services
                 {
                     var sp = (SerialPort)sender;
                     try
-                    {
+                    {   
                         string request = _serialPort.ReadLine().Trim();
                         Console.WriteLine($"Slave received: {request}");
                         if (request.StartsWith(this._getDistance + ":"))
@@ -60,15 +52,27 @@ namespace SimulatorProject.services
                             string[] data = request.Split(':');
 
                             string time = _timer.GetElapsedTime();
-                            double distance = this.GetDistance(data[1]);
+                            string response = "";
+                            var anchor = this._simulationService.helicopter.GetAnchorById(data[1]);
+                            System.Console.WriteLine(anchor);
+                            if (anchor != null)
+                            {
+                                response = $"Time: {time} | " + anchor.ToString() + "|"
+                               + $"distance: {this._simulationService.CalaculateDistance(anchor)}";
+
+                            }
+                            else
+                            {
+                                response = $"Time: {time} | No anchor found";
+
+                            }
 
 
 
                             await Task.Delay(TimeSpan.FromMilliseconds(this._responseDelay));
 
-                            sp.WriteLine(time);
-                            Console.WriteLine($"Sent: {time}");
-
+                            sp.WriteLine(response);
+                          
 
                         }
                         else

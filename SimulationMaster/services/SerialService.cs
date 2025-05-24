@@ -25,7 +25,7 @@ namespace SimulationMaster.services
         private string GenerateAnchorId()
         {
             var rand = new Random();
-            return rand.Next(3).ToString();
+            return rand.Next(4).ToString();
         }
 
         private string CreateRequest(string anchorId)
@@ -48,6 +48,11 @@ namespace SimulationMaster.services
             try
             {
                 string response = port.ReadLine();
+                var parts = response.Split('|');
+                foreach (var part in parts)
+                {
+                    System.Console.WriteLine(part);
+                }
 
                 Console.WriteLine($"[Master] Received: {response}");
 

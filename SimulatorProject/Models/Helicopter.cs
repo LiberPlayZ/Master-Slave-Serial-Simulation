@@ -13,6 +13,12 @@ namespace SimulatorProject.Models
         public Helicopter()
         {
             this.anchors = new Anchor[3];
+            int id = 1;
+            for (int i = 0; i < 3; i++)
+            {
+                this.anchors[i] = new Anchor(id.ToString());
+                id++;
+            }
             this.center = new Point3D();
         }
 
@@ -26,6 +32,17 @@ namespace SimulatorProject.Models
                 }
             }
             return null;
+        }
+
+        public override string ToString()
+        {
+            string res = "";
+            foreach (var anchor in this.anchors)
+            {
+                res += anchor.ToString() + "\n";
+
+            }
+            return res;
         }
 
     }
