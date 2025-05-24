@@ -3,22 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO.Ports;
 using System.Threading.Tasks;
-using SimulationMaster.config;
+using SharedConfig;
 namespace SimulationMaster.services
 {
     public class SerialService
     {
         private readonly SerialPort _serialPort;
-        private readonly string _getDistanceCommand;
-        public SerialService(ConfigData config)
+
+        public SerialService()
         {
-            this._serialPort = new SerialPort(config.PortName.Trim(), config.BaudRate)
+            _serialPort = new SerialPort(SharedConfig.ConfigManager.Get("MASTER_PORT_NAME").Trim(), SharedConfig.ConfigManager.GetInt("BAUD_RATE"))
             {
                 NewLine = "\n",
                 ReadTimeout = 5000,
                 WriteTimeout = 5000
             };
-            this._getDistanceCommand = config.GetDistanceCommand.Trim();
+
 
         }
 
@@ -30,7 +30,7 @@ namespace SimulationMaster.services
 
         private string CreateRequest(string anchorId)
         {
-            return $"{this._getDistanceCommand}:{anchorId}";
+            return $"{SharedConfig.ConfigManager.Get("GET_DISTANCE_COMMAND").Trim()}:{anchorId}";
         }
 
         private async Task Send()

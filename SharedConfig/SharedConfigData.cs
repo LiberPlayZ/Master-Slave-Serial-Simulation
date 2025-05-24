@@ -1,45 +1,33 @@
-using DotNetEnv;
-using System.Globalization;
-namespace SharedConfig;
+using dotenv.net;
+using System;
+using System.Collections.Generic;
 
-public static class ConfigData
+namespace SharedConfig
 {
-    public static void Load()
+    public static class ConfigManager
     {
-        Env.Load("/home/daniel-liberman/projects/takshaon/.env.shared"); // Shared config first
-        Env.Load(); // Then project-specific .env
-    }
+        private static readonly Dictionary<string, string> _config;
 
-    public static string Get(string key) => Env.GetString(key);
-
-    public static int? GetInt(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
-
-        try
-        {   
-            var result = int.Parse(value.Trim());
-            return result;
-        }
-        catch (Exception ex)
+        static ConfigManager()
         {
-            Console.WriteLine("error : " + ex);
+
+            DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
+            _config = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["SLAVE_PORT_NAME"] = Environment.GetEnvironmentVariable("SLAVE_PORT_NAME") ?? " /tmp/ttyV0",
+                ["MASTER_PORT_NAME"] = Environment.GetEnvironmentVariable("MASTER_PORT_NAME") ?? " /tmp/ttyV1",
+                ["BAUD_RATE"] = Environment.GetEnvironmentVariable("BAUD_RATE") ?? "9600",
+                ["RESPONSE_DELAY"] = Environment.GetEnvironmentVariable("RESPONSE_DELAY") ?? "5.5",
+                ["GET_DISTANCE_COMMAND"] = Environment.GetEnvironmentVariable("GET_DISTANCE_COMMAND") ?? "GET_DISTANCE",
+                ["MAX_RANGE"] = Environment.GetEnvironmentVariable("MAX_RANGE") ?? "0.5",
+                ["MIN_RANGE"] = Environment.GetEnvironmentVariable("MIN_RANGE") ?? "-0.5",
+            };
         }
 
-        return null;
-    }
+        public static string Get(string key) => _config[key];
 
-    public static double? GetDouble(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
+        public static int GetInt(string key) => int.Parse(_config[key]);
 
-        if (double.TryParse(value.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out double result))
-        {
-            return result;
-        }
-
-        return null;
+        public static double GetDouble(string key) => double.Parse(_config[key]);
     }
 }

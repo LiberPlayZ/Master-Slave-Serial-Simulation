@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO.Ports;
 using System.Linq;
 using System.Threading.Tasks;
-using SimulatorProject.config;
+using SharedConfig;
 
 namespace SimulatorProject.services
 {
@@ -14,22 +14,18 @@ namespace SimulatorProject.services
 
         private readonly SimulationService _simulationService;
 
-        private readonly string _getDistance;
 
-        private readonly double _responseDelay;
-
-        public SerialService(TimerService timer, SimulationService simulationService, ConfigData config)
+        public SerialService(TimerService timer, SimulationService simulationService)
         {
             _timer = timer;
             this._simulationService = simulationService;
-            _serialPort = new SerialPort(config.PortName.Trim(), config.BaudRate)
+            _serialPort = new SerialPort(SharedConfig.ConfigManager.Get("SLAVE_PORT_NAME").Trim(), SharedConfig.ConfigManager.GetInt("BAUD_RATE"))
             {
                 NewLine = "\n",
                 ReadTimeout = 5000,
                 WriteTimeout = 5000
             };
-            this._getDistance = config.GetDistanceCommand.Trim();
-            this._responseDelay = config.ResponseDelay;
+      
         }
 
 
@@ -44,10 +40,10 @@ namespace SimulatorProject.services
                 {
                     var sp = (SerialPort)sender;
                     try
-                    {   
+                    {
                         string request = _serialPort.ReadLine().Trim();
                         Console.WriteLine($"Slave received: {request}");
-                        if (request.StartsWith(this._getDistance + ":"))
+                        if (request.StartsWith(SharedConfig.ConfigManager.Get("GET_DISTANCE_COMMAND").Trim() + ":"))
                         {
                             string[] data = request.Split(':');
 
@@ -69,10 +65,10 @@ namespace SimulatorProject.services
 
 
 
-                            await Task.Delay(TimeSpan.FromMilliseconds(this._responseDelay));
+                            await Task.Delay(TimeSpan.FromMilliseconds(SharedConfig.ConfigManager.GetDouble("RESPONSE_DELAY")));
 
                             sp.WriteLine(response);
-                          
+
 
                         }
                         else
