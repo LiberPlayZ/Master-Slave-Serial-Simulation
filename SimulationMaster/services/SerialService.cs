@@ -10,7 +10,9 @@ namespace SimulationMaster.services
     {
         private readonly SerialPort _serialPort;
 
-        public SerialService()
+        private readonly CsvService _csvService;
+
+        public SerialService(CsvService csvService)
         {
             _serialPort = new SerialPort(SharedConfig.ConfigManager.Get("MASTER_PORT_NAME").Trim(), SharedConfig.ConfigManager.GetInt("BAUD_RATE"))
             {
@@ -18,6 +20,7 @@ namespace SimulationMaster.services
                 ReadTimeout = 5000,
                 WriteTimeout = 5000
             };
+            this._csvService = csvService;
 
 
         }
@@ -42,17 +45,14 @@ namespace SimulationMaster.services
             await Task.Delay(TimeSpan.FromSeconds(5));
         }
 
-        private static void OnDataReceived(object sender, SerialDataReceivedEventArgs e)
+        private  void OnDataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             var port = (SerialPort)sender;
             try
             {
                 string response = port.ReadLine();
                 var parts = response.Split('|');
-                foreach (var part in parts)
-                {
-                    System.Console.WriteLine(part);
-                }
+                this._csvService.Log(parts);
 
                 Console.WriteLine($"[Master] Received: {response}");
 

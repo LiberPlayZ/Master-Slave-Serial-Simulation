@@ -21,6 +21,8 @@ namespace SharedConfig
                 ["GET_DISTANCE_COMMAND"] = Environment.GetEnvironmentVariable("GET_DISTANCE_COMMAND") ?? "GET_DISTANCE",
                 ["MAX_RANGE"] = Environment.GetEnvironmentVariable("MAX_RANGE") ?? "0.5",
                 ["MIN_RANGE"] = Environment.GetEnvironmentVariable("MIN_RANGE") ?? "-0.5",
+                ["CSV_PATH"] = Environment.GetEnvironmentVariable("CSV_PATH") ?? "logs/output/log.csv",
+
             };
         }
 

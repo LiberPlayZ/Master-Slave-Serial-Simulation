@@ -14,7 +14,7 @@ class Program
             {
 
                 services.AddSingleton<SerialService>();
-
+                services.AddSingleton<CsvService>();
             })
             .Build();
         var serialService = host.Services.GetRequiredService<SerialService>();
