@@ -25,7 +25,7 @@ namespace SimulatorProject.services
                 ReadTimeout = 5000,
                 WriteTimeout = 5000
             };
-      
+
         }
 
 
@@ -46,11 +46,10 @@ namespace SimulatorProject.services
                         if (request.StartsWith(SharedConfig.ConfigManager.Get("GET_DISTANCE_COMMAND").Trim() + ":"))
                         {
                             string[] data = request.Split(':');
-
+                            this._simulationService.helicopter.ChangeRandomAnchorPos();
                             string time = _timer.GetElapsedTime();
                             string response = "";
                             var anchor = this._simulationService.helicopter.GetAnchorById(data[1]);
-                            System.Console.WriteLine(anchor);
                             if (anchor != null)
                             {
                                 response = $"Time: {time} | " + anchor.ToString() + "|"

@@ -42,10 +42,10 @@ namespace SimulationMaster.services
             this._serialPort.WriteLine(this.CreateRequest(this.GenerateAnchorId()));
 
 
-            await Task.Delay(TimeSpan.FromSeconds(5));
+            await Task.Delay(TimeSpan.FromSeconds(5));  
         }
 
-        private  void OnDataReceived(object sender, SerialDataReceivedEventArgs e)
+        private void OnDataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             var port = (SerialPort)sender;
             try

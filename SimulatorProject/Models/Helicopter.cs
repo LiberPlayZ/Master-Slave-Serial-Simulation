@@ -10,6 +10,8 @@ namespace SimulatorProject.Models
         public Anchor[] anchors;
 
         public Point3D center;
+
+        public Random random = new Random();
         public Helicopter()
         {
             this.anchors = new Anchor[3];
@@ -32,6 +34,12 @@ namespace SimulatorProject.Models
                 }
             }
             return null;
+        }
+
+        public void ChangeRandomAnchorPos()
+        {
+            int pos = random.Next(this.anchors.Length);
+            this.anchors[pos].GenerateNewPoint(random, 20);
         }
 
         public override string ToString()

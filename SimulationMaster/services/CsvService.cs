@@ -38,6 +38,7 @@ namespace SimulationMaster.services
 
         }
 
+        // the function is adding the data to csv by new line . 
         public void Log(string[] parts)
         {
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
