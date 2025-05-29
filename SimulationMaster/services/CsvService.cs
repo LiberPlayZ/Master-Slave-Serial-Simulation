@@ -20,18 +20,18 @@ namespace SimulationMaster.services
         {
             string folderPath = Path.GetDirectoryName(_filePath)!;
 
-          
+
             if (!Directory.Exists(folderPath))
             {
                 Directory.CreateDirectory(folderPath);
             }
 
-           
+
             if (!File.Exists(_filePath))
             {
                 using (var writer = new StreamWriter(_filePath, false))
                 {
-                    writer.WriteLine("Timestamp,Time,Distance\n"); 
+                    writer.WriteLine("Timestamp,Time,Distance\n");
                 }
             }
 
@@ -39,11 +39,11 @@ namespace SimulationMaster.services
         }
 
         // the function is adding the data to csv by new line . 
-        public void Log(string[] parts)
+        public void Log(string response)
         {
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            var lines = string.Join(Environment.NewLine, parts.Select(p => $"{timestamp},{p}"));
-            File.AppendAllText(_filePath, lines + Environment.NewLine);
+            var line = $"{timestamp},{response}";
+            File.AppendAllText(_filePath, line + Environment.NewLine);
         }
     }
 }

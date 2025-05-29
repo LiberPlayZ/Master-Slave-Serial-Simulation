@@ -51,8 +51,7 @@ namespace SimulationMaster.services
             try
             {
                 string response = port.ReadLine();
-                var parts = response.Split('|');
-                this._csvService.Log(parts);
+                this._csvService.Log(response);
 
                 Console.WriteLine($"[Master] Received: {response}");
 

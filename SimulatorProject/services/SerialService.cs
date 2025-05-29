@@ -52,13 +52,12 @@ namespace SimulatorProject.services
                             var anchor = this._simulationService.helicopter.GetAnchorById(data[1]);
                             if (anchor != null)
                             {
-                                response = $"Time: {time} | " + anchor.ToString() + "|"
-                               + $"distance: {this._simulationService.CalaculateDistance(anchor)}";
+                                response = $"Time: {time},distance: {this._simulationService.CalaculateDistance(anchor)},Id: {data[1]}";
 
                             }
                             else
                             {
-                                response = $"Time: {time} | No anchor found";
+                                response = $"Time: {time},No anchor found";
 
                             }
 
