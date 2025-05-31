@@ -31,7 +31,7 @@ namespace SimulationMaster.services
             {
                 using (var writer = new StreamWriter(_filePath, false))
                 {
-                    writer.WriteLine("Timestamp,Time,Distance\n");
+                    writer.WriteLine("Timestamp,Time,Distance,Id\n");
                 }
             }
 

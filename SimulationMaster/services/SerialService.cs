@@ -12,6 +12,8 @@ namespace SimulationMaster.services
 
         private readonly CsvService _csvService;
 
+        private int anchorId = 0;
+
         public SerialService(CsvService csvService)
         {
             _serialPort = new SerialPort(SharedConfig.ConfigManager.Get("MASTER_PORT_NAME").Trim(), SharedConfig.ConfigManager.GetInt("BAUD_RATE"))
@@ -25,10 +27,15 @@ namespace SimulationMaster.services
 
         }
 
-        private string GenerateAnchorId()
+        private string GetAnchorId()
         {
-            var rand = new Random();
-            return rand.Next(4).ToString();
+            var getAnchor = (this.anchorId % 3) + 1;
+            return getAnchor.ToString();
+        }
+
+        private void IncreaseAnchorId()
+        {
+            this.anchorId++;
         }
 
         private string CreateRequest(string anchorId)
@@ -39,7 +46,7 @@ namespace SimulationMaster.services
         private async Task Send()
         {
             Console.WriteLine("Sending time request to slave...");
-            this._serialPort.WriteLine(this.CreateRequest(this.GenerateAnchorId()));
+            this._serialPort.WriteLine(this.CreateRequest(this.GetAnchorId()));
 
 
             await Task.Delay(TimeSpan.FromSeconds(5));  
@@ -68,7 +75,7 @@ namespace SimulationMaster.services
                 while (true)
                 {
                     await this.Send();
-
+                    this.IncreaseAnchorId();
                 }
 
             }
