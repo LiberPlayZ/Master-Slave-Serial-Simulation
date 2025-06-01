@@ -15,12 +15,16 @@ namespace SimulatorProject.services
 
         private double error;
 
+        private double pilot_speed;
+
         public Random random = new Random();
         public SimulationService()
         {
             this.pilot = new Pilot();
             this.helicopter = new Helicopter();
             this.error = 0.0;
+            this.pilot_speed = SharedConfig.ConfigManager.GetDouble("PILOT_SPEED");
+          
 
         }
 
@@ -38,7 +42,10 @@ namespace SimulatorProject.services
             double sideB = Math.Max(Math.Abs(this.pilot.point.X), Math.Abs(anchor.point.X))
             - Math.Min(Math.Abs(this.pilot.point.X), Math.Abs(anchor.point.X));
 
-            return Math.Sqrt(Math.Pow(sideA, 2) + Math.Pow(sideB, 2));
+             double sideC = Math.Max(Math.Abs(this.pilot.point.Z), Math.Abs(anchor.point.Z))
+            - Math.Min(Math.Abs(this.pilot.point.Z), Math.Abs(anchor.point.Z));
+
+            return Math.Sqrt(Math.Pow(sideA, 2) + Math.Pow(sideB, 2) + Math.Pow(sideC, 2));
         }
     }
 }

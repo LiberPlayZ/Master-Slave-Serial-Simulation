@@ -12,7 +12,7 @@ namespace SimulationMaster.services
 
         private readonly CsvService _csvService;
 
-        private int anchorId = 0;
+        private int anchorId = 3;
 
         public SerialService(CsvService csvService)
         {
@@ -29,14 +29,11 @@ namespace SimulationMaster.services
 
         private string GetAnchorId()
         {
-            var getAnchor = (this.anchorId % 3) + 1;
-            return getAnchor.ToString();
+            this.anchorId = (this.anchorId % 3) + 1;
+            return this.anchorId.ToString();
         }
 
-        private void IncreaseAnchorId()
-        {
-            this.anchorId++;
-        }
+
 
         private string CreateRequest(string anchorId)
         {
@@ -49,7 +46,7 @@ namespace SimulationMaster.services
             this._serialPort.WriteLine(this.CreateRequest(this.GetAnchorId()));
 
 
-            await Task.Delay(TimeSpan.FromSeconds(5));  
+            await Task.Delay(TimeSpan.FromSeconds(5));
         }
 
         private void OnDataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -75,7 +72,6 @@ namespace SimulationMaster.services
                 while (true)
                 {
                     await this.Send();
-                    this.IncreaseAnchorId();
                 }
 
             }
