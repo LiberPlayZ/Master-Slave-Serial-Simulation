@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SimulatorProject.config;
 using SimulatorProject.Models;
 
 namespace SimulatorProject.services
@@ -18,13 +19,13 @@ namespace SimulatorProject.services
         private double pilot_speed;
 
         public Random random = new Random();
-        public SimulationService()
+        public SimulationService(SimulationConfig simulationConfig)
         {
-            this.pilot = new Pilot();
-            this.helicopter = new Helicopter();
+            this.pilot = new Pilot(simulationConfig.Pilot);
+            this.helicopter = new Helicopter(simulationConfig.Anchors);
             this.error = 0.0;
             this.pilot_speed = SharedConfig.ConfigManager.GetDouble("PILOT_SPEED");
-          
+
 
         }
 
@@ -42,8 +43,8 @@ namespace SimulatorProject.services
             double sideB = Math.Max(Math.Abs(this.pilot.point.X), Math.Abs(anchor.point.X))
             - Math.Min(Math.Abs(this.pilot.point.X), Math.Abs(anchor.point.X));
 
-             double sideC = Math.Max(Math.Abs(this.pilot.point.Z), Math.Abs(anchor.point.Z))
-            - Math.Min(Math.Abs(this.pilot.point.Z), Math.Abs(anchor.point.Z));
+            double sideC = Math.Max(Math.Abs(this.pilot.point.Z), Math.Abs(anchor.point.Z))
+           - Math.Min(Math.Abs(this.pilot.point.Z), Math.Abs(anchor.point.Z));
 
             return Math.Sqrt(Math.Pow(sideA, 2) + Math.Pow(sideB, 2) + Math.Pow(sideC, 2));
         }

@@ -6,11 +6,28 @@ using System.Threading.Tasks;
 
 namespace SimulatorProject.Models
 {
-    public class Anchor(string id, double x = 1, double y = 1, double z = 1)
+    public class Anchor
     {
-        public string Id { get; set; } = id;
+        public string Id { get; set; }
 
-        public Point3D point = new Point3D(x, y, z);
+        public Point3D point { get; set; }
+
+        public Anchor()
+        {
+            
+        }
+
+        public Anchor(string id, double x = 1, double y = 1, double z = 1)
+        {
+            this.Id = id;
+            this.point = new Point3D(x, y, z);
+        }
+
+        public Anchor(Anchor other)
+        {
+            this.Id = other.Id;
+            this.point = new Point3D(other.point.X, other.point.Y, other.point.Z);
+        }
 
         public override string ToString()
         {

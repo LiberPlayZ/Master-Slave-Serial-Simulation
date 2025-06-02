@@ -46,7 +46,6 @@ namespace SimulatorProject.services
                         if (request.StartsWith(SharedConfig.ConfigManager.Get("GET_DISTANCE_COMMAND").Trim() + ":"))
                         {
                             string[] data = request.Split(':');
-                            this._simulationService.helicopter.ChangeRandomAnchorPos();
                             string time = _timer.GetElapsedTime();
                             string response = "";
                             var anchor = this._simulationService.helicopter.GetAnchorById(data[1]);

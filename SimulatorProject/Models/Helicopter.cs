@@ -24,6 +24,18 @@ namespace SimulatorProject.Models
             this.center = new Point3D();
         }
 
+
+        public Helicopter(Anchor[] array)
+        {
+            this.anchors = new Anchor[array.Length];
+            for (int i = 0; i < array.Length; i++)
+            {
+                this.anchors[i] = new Anchor(array[i]);
+                
+            }
+            this.center = new Point3D();
+        }
+
         public Anchor? GetAnchorById(string id)
         {
             foreach (var anchor in this.anchors)
