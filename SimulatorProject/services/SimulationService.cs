@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SimulatorProject.config;
+using SimulatorProject.enums;
 using SimulatorProject.Models;
 
 namespace SimulatorProject.services
@@ -18,6 +19,10 @@ namespace SimulatorProject.services
 
         private double pilot_speed;
 
+        private readonly string pilot_speed_type;
+
+        private readonly double scaleToUnits = 0.5; // variable to scale distance from real world to units . 
+
         public Random random = new Random();
         public SimulationService(SimulationConfig simulationConfig)
         {
@@ -25,6 +30,7 @@ namespace SimulatorProject.services
             this.helicopter = new Helicopter(simulationConfig.Anchors);
             this.error = 0.0;
             this.pilot_speed = SharedConfig.ConfigManager.GetDouble("PILOT_SPEED");
+            this.pilot_speed_type = SetPilotSpeedType(SharedConfig.ConfigManager.Get("PILOT_SPEED_TYPE").ToLower());
 
 
         }
@@ -32,6 +38,53 @@ namespace SimulatorProject.services
         public void GenerateError(double min, double max)
         {
             this.error = min + (random.NextDouble() * (max - min));
+        }
+
+        private static string SetPilotSpeedType(string type)
+        {
+
+            if (type == PilotSpeedType.KILOMETERS_PER_HOUR || type == PilotSpeedType.METERS_PER_SECOND ||
+             type == PilotSpeedType.MILES_PER_HOUR)
+            {
+                return type;
+            }
+            System.Console.WriteLine("pilot speed type is incorrectly and set to mps by deffualt .");
+            return PilotSpeedType.METERS_PER_SECOND;
+
+
+        }
+
+        public void SetNewPilotCordinate(TimeSpan timePassed, char cordinate, string? direction)
+        {
+            double distancePass = this.CalaculateDistancePass(timePassed);
+            switch (cordinate)
+            {
+                case 'x':
+                    this.pilot.point.X += distancePass;
+                    break;
+                case 'y':
+                    this.pilot.point.Y += distancePass;
+                    break;
+                case 'z':
+                    this.pilot.point.Z += distancePass;
+                    break;
+            }
+            System.Console.WriteLine($"time pass: {timePassed} \n distancePass: {distancePass} \n pilot point: {this.pilot.point.ToString()}");
+        }
+
+        public double CalaculateDistancePass(TimeSpan timePassed)
+        {
+
+            if (this.pilot_speed_type == PilotSpeedType.METERS_PER_SECOND)
+            {
+                return this.pilot_speed * timePassed.TotalSeconds * this.scaleToUnits;
+            }
+            else
+            {
+                return this.pilot_speed * timePassed.TotalHours * this.scaleToUnits;
+            }
+
+
         }
 
 

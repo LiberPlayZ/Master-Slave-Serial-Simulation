@@ -11,19 +11,28 @@ class Program
     {
         var json = File.ReadAllText("config/SimulationConfig.json");
         var config = JsonSerializer.Deserialize<SimulationConfig>(json);
-        using IHost host = Host.CreateDefaultBuilder(args)
-            .ConfigureServices((_, services) =>
-            {
-                services.AddSingleton(config);
+        if (config != null)
+        {
+            using IHost host = Host.CreateDefaultBuilder(args)
+                .ConfigureServices((_, services) =>
+                {
+                    services.AddSingleton(config);
 
-                services.AddSingleton<TimerService>();
-                services.AddSingleton<SerialService>();
-                services.AddSingleton<SimulationService>();
-            })
-            .Build();
+                    services.AddSingleton<TimerService>();
+                    services.AddSingleton<SerialService>();
+                    services.AddSingleton<SimulationService>();
+                })
+                .Build();
 
-        var serialService = host.Services.GetRequiredService<SerialService>();
-        serialService.Start();
+
+            var serialService = host.Services.GetRequiredService<SerialService>();
+            serialService.Start();
+        }
+        else
+        {
+            System.Console.WriteLine("No json provide with deffualt values.");
+
+        }
 
 
 

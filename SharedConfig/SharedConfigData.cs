@@ -23,6 +23,9 @@ namespace SharedConfig
                 ["MIN_RANGE"] = Environment.GetEnvironmentVariable("MIN_RANGE") ?? "-0.5",
                 ["CSV_PATH"] = Environment.GetEnvironmentVariable("CSV_PATH") ?? "logs/output/log.csv",
                 ["PILOT_SPEED"] = Environment.GetEnvironmentVariable("PILOT_SPEED") ?? "10",
+                ["PILOT_SPEED_TYPE"] = Environment.GetEnvironmentVariable("PILOT_SPEED_TYPE") ?? "mps",
+
+
 
             };
         }

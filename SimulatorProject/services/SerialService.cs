@@ -47,6 +47,7 @@ namespace SimulatorProject.services
                         {
                             string[] data = request.Split(':');
                             string time = _timer.GetElapsedTime();
+                            this._simulationService.SetNewPilotCordinate(this._timer.GetTimePassFromLast(), 'x', null);
                             string response = "";
                             var anchor = this._simulationService.helicopter.GetAnchorById(data[1]);
                             if (anchor != null)
@@ -65,6 +66,8 @@ namespace SimulatorProject.services
                             await Task.Delay(TimeSpan.FromMilliseconds(SharedConfig.ConfigManager.GetDouble("RESPONSE_DELAY")));
 
                             sp.WriteLine(response);
+
+                            this._timer.SetLastTimer();
 
 
                         }
