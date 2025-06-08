@@ -54,19 +54,35 @@ namespace SimulatorProject.services
 
         }
 
-        public void SetNewPilotCordinate(TimeSpan timePassed, char cordinate, string? direction)
+        private int GetDirectionMultiplyer(DirectionType direction)
+        {
+            return direction switch
+            {
+                DirectionType.LEFT or DirectionType.DOWN or DirectionType.BACKWARD => -1,
+                DirectionType.RIGHT or DirectionType.UP or DirectionType.FORWARD => 1,
+                _ => throw new ArgumentException("Invalid direction")
+            };
+
+        }
+
+        public void SetNewPilotCordinate(TimeSpan timePassed, CordinateType cordinate, DirectionType direction)
         {
             double distancePass = this.CalaculateDistancePass(timePassed);
+
+            double movement = distancePass * this.GetDirectionMultiplyer(direction);
+
+            System.Console.WriteLine(movement);
+
             switch (cordinate)
             {
-                case 'x':
-                    this.pilot.point.X += distancePass;
+                case CordinateType.X:
+                    this.pilot.point.X += movement;
                     break;
-                case 'y':
-                    this.pilot.point.Y += distancePass;
+                case CordinateType.Y:
+                    this.pilot.point.Y += movement;
                     break;
-                case 'z':
-                    this.pilot.point.Z += distancePass;
+                case CordinateType.Z:
+                    this.pilot.point.Z += movement;
                     break;
             }
             System.Console.WriteLine($"time pass: {timePassed} \n distancePass: {distancePass} \n pilot point: {this.pilot.point.ToString()}");

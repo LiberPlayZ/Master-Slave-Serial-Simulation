@@ -4,6 +4,7 @@ using System.IO.Ports;
 using System.Linq;
 using System.Threading.Tasks;
 using SharedConfig;
+using SimulatorProject.enums;
 
 namespace SimulatorProject.services
 {
@@ -47,7 +48,7 @@ namespace SimulatorProject.services
                         {
                             string[] data = request.Split(':');
                             string time = _timer.GetElapsedTime();
-                            this._simulationService.SetNewPilotCordinate(this._timer.GetTimePassFromLast(), 'x', null);
+                            this._simulationService.SetNewPilotCordinate(this._timer.GetTimePassFromLast(), CordinateType.X, DirectionType.BACKWARD);
                             string response = "";
                             var anchor = this._simulationService.helicopter.GetAnchorById(data[1]);
                             if (anchor != null)
