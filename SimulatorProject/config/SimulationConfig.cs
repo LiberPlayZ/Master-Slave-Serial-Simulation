@@ -8,7 +8,7 @@ namespace SimulatorProject.config
 {
     public class SimulationConfig
     {
-        public Anchor[]? Anchors { get; set; }
-        public Pilot? Pilot { get; set; }
+        public required Anchor[] Anchors { get; set; }
+        public required Pilot Pilot { get; set; }
     }
 }

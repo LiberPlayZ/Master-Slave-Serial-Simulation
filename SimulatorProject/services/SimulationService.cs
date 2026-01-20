@@ -71,7 +71,6 @@ namespace SimulatorProject.services
 
             double movement = distancePass * this.GetDirectionMultiplyer(direction);
 
-            System.Console.WriteLine(movement);
 
             switch (cordinate)
             {

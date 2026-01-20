@@ -58,3 +58,6 @@ publish/
 
 # Global.json lock file
 global.json.lock
+
+
+SimulationMaster/logs/
