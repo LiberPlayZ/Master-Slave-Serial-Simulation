@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.IO.Ports;
 using System.Linq;
 using System.Threading.Tasks;
-using SimulatorProject.config;
+using SharedConfig;
+using SimulatorProject.enums;
 
 namespace SimulatorProject.services
 {
@@ -12,16 +13,23 @@ namespace SimulatorProject.services
         private readonly SerialPort _serialPort;
         private readonly TimerService _timer;
 
-        public SerialService(TimerService timer, ConfigData config)
+        private readonly SimulationService _simulationService;
+
+
+        public SerialService(TimerService timer, SimulationService simulationService)
         {
             _timer = timer;
-            _serialPort = new SerialPort(config.PortName.Trim(), config.BaudRate)
+            this._simulationService = simulationService;
+            _serialPort = new SerialPort(SharedConfig.ConfigManager.Get("SLAVE_PORT_NAME").Trim(), SharedConfig.ConfigManager.GetInt("BAUD_RATE"))
             {
                 NewLine = "\n",
                 ReadTimeout = 5000,
                 WriteTimeout = 5000
             };
+
         }
+
+
 
         public void Start()
         {
@@ -29,32 +37,51 @@ namespace SimulatorProject.services
             {
                 _timer.Start();
                 _serialPort.Open();
-                Console.WriteLine("SerialTimerServer is running and waiting for requests...");
-
-                while (true)
+                _serialPort.DataReceived += async (sender, e) =>
                 {
+                    var sp = (SerialPort)sender;
                     try
                     {
                         string request = _serialPort.ReadLine().Trim();
-
-                        if (request == "GET_TIME")
+                        Console.WriteLine($"Slave received: {request}");
+                        if (request.StartsWith(SharedConfig.ConfigManager.Get("GET_DISTANCE_COMMAND").Trim() + ":"))
                         {
+                            string[] data = request.Split(':');
                             string time = _timer.GetElapsedTime();
-                            _serialPort.WriteLine(time);
-                            Console.WriteLine($"Sent: {time}");
+                            this._simulationService.SetNewPilotCordinate(this._timer.GetTimePassFromLast(), CordinateType.X, DirectionType.BACKWARD);
+                            string response = "";
+                            var anchor = this._simulationService.helicopter.GetAnchorById(data[1]);
+                            if (anchor != null)
+                            {
+                                response = $"Time: {time},distance: {this._simulationService.CalaculateDistance(anchor)},Id: {data[1]}";
+
+                            }
+                            else
+                            {
+                                response = $"Time: {time},No anchor found";
+
+                            }
+
+
+
+                            await Task.Delay(TimeSpan.FromMilliseconds(SharedConfig.ConfigManager.GetDouble("RESPONSE_DELAY")));
+
+                            sp.WriteLine(response);
+
+                            this._timer.SetLastTimer();
+
+
                         }
                         else
                         {
-                            _serialPort.WriteLine("UNKNOWN_COMMAND");
+                            sp.WriteLine("UNKNOWN_COMMAND");
                         }
-                    }
-                    catch (TimeoutException)
-                    {
 
                     }
-                    Thread.Sleep(100);
-                }
-
+                    catch (TimeoutException) { }
+                };
+                Console.WriteLine("Slave is listening...");
+                Console.ReadLine();
 
             }
             catch (Exception ex)

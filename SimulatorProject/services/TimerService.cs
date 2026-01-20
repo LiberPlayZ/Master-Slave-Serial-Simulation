@@ -9,16 +9,28 @@ namespace SimulatorProject.services
     public class TimerService
     {
         private readonly Stopwatch _stopwatch = new();
+        private TimeSpan _lastTimer;
 
         public void Start()
         {
+            this._lastTimer = _stopwatch.Elapsed;
             _stopwatch.Start();
+
         }
 
         public string GetElapsedTime()
         {
             var ts = _stopwatch.Elapsed;
             return $"{ts.Hours:D2}:{ts.Minutes:D2}:{ts.Seconds:D2}.{ts.Milliseconds:D3}";
+        }
+        public TimeSpan GetTimePassFromLast()
+        {
+            var result = _stopwatch.Elapsed - this._lastTimer;
+            return result;
+        }
+        public void SetLastTimer()
+        {
+            this._lastTimer = this._stopwatch.Elapsed;
         }
     }
 }
