@@ -21,5 +21,12 @@ namespace SimulatorProject.Models
             this.point = new Point3D(other.point.X, other.point.Y, other.point.Z);
         }
 
+        public Point3D GetPilotPointCopy()
+        {
+            // Return a copy so callers can't mutate internal state
+            return new Point3D(this.point.X, this.point.Y, this.point.Z);
+        }
+
+
     }
 }

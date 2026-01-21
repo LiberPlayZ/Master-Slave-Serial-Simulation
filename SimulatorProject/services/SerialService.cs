@@ -44,38 +44,56 @@ namespace SimulatorProject.services
                     {
                         string request = _serialPort.ReadLine().Trim();
                         Console.WriteLine($"Slave received: {request}");
-                        if (request.StartsWith(SharedConfig.ConfigManager.Get("GET_DISTANCE_COMMAND").Trim() + ":"))
-                        {
-                            string[] data = request.Split(':');
-                            string time = _timer.GetElapsedTime();
-                            this._simulationService.SetNewPilotCordinate(this._timer.GetTimePassFromLast(), CordinateType.X, DirectionType.BACKWARD);
-                            string response = "";
-                            var anchor = this._simulationService.helicopter.GetAnchorById(data[1]);
-                            if (anchor != null)
-                            {
-                                response = $"Time: {time},distance: {this._simulationService.CalaculateDistance(anchor)},Id: {data[1]}";
-
-                            }
-                            else
-                            {
-                                response = $"Time: {time},No anchor found";
-
-                            }
-
-
-
-                            await Task.Delay(TimeSpan.FromMilliseconds(SharedConfig.ConfigManager.GetDouble("RESPONSE_DELAY")));
-
-                            sp.WriteLine(response);
-
-                            this._timer.SetLastTimer();
-
-
-                        }
-                        else
+                        string[] parts = request.Split(':', 2);
+                        string commandText = parts[0];
+                        string response = "";
+                        if (!SerialCommandExtensions.TryParseWireString(commandText, out var command))
                         {
                             sp.WriteLine("UNKNOWN_COMMAND");
+                            return;
                         }
+                        switch (command)
+                        {
+                            case SerialCommand.GET_DISTANCE:
+                                if (parts.Length < 2)
+                                {
+                                    sp.WriteLine("MISSING_ID");
+                                    return;
+                                }
+                                string anchorId = parts[1];
+                                string time = _timer.GetElapsedTime();
+
+                                _simulationService.SetNewPilotCordinate(
+                                    _timer.GetTimePassFromLast(),
+                                    CordinateType.X,
+                                    DirectionType.BACKWARD);
+
+                                var anchor = _simulationService.helicopter.GetAnchorById(anchorId);
+                                response = anchor != null
+                                   ? $"Time: {time},distance: {_simulationService.CalaculateDistance(anchor)},Id: {anchorId}"
+                                   : $"Time: {time},No anchor found";
+                                break;
+
+                            case SerialCommand.GET_PILOT_POSITION:
+                                _simulationService.SetNewPilotCordinate(
+                                    _timer.GetTimePassFromLast(),
+                                    CordinateType.X,
+                                    DirectionType.BACKWARD);
+
+                                var point = _simulationService.GetPilotPoint();
+                                response = $"PILOT_POSITION:{point.X},{point.Y},{point.Z}";
+                                break;
+
+                            default:
+                                sp.WriteLine("UNKNOWN_COMMAND");
+                                break;
+                        }
+
+                        await Task.Delay(TimeSpan.FromMilliseconds(ConfigManager.GetDouble("RESPONSE_DELAY")));
+                        sp.WriteLine(response);
+                        _timer.SetLastTimer();
+
+
 
                     }
                     catch (TimeoutException) { }
@@ -89,5 +107,7 @@ namespace SimulatorProject.services
                 Console.WriteLine($"Serial error: {ex.Message}");
             }
         }
+
+
     }
 }

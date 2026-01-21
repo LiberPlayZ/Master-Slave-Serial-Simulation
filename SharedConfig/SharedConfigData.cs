@@ -18,7 +18,6 @@ namespace SharedConfig
                 ["MASTER_PORT_NAME"] = Environment.GetEnvironmentVariable("MASTER_PORT_NAME") ?? " /tmp/ttyV1",
                 ["BAUD_RATE"] = Environment.GetEnvironmentVariable("BAUD_RATE") ?? "9600",
                 ["RESPONSE_DELAY"] = Environment.GetEnvironmentVariable("RESPONSE_DELAY") ?? "5.5",
-                ["GET_DISTANCE_COMMAND"] = Environment.GetEnvironmentVariable("GET_DISTANCE_COMMAND") ?? "GET_DISTANCE",
                 ["MAX_RANGE"] = Environment.GetEnvironmentVariable("MAX_RANGE") ?? "0.5",
                 ["MIN_RANGE"] = Environment.GetEnvironmentVariable("MIN_RANGE") ?? "-0.5",
                 ["CSV_PATH"] = Environment.GetEnvironmentVariable("CSV_PATH") ?? "logs/output/log.csv",

@@ -12,7 +12,9 @@ namespace SimulationMaster.services
 
         private readonly CsvService _csvService;
 
-        private int anchorId = 3;
+        private int anchorsLen = 3;
+
+        private bool cycle = false;
 
         public SerialService(CsvService csvService)
         {
@@ -29,24 +31,27 @@ namespace SimulationMaster.services
 
         private string GetAnchorId()
         {
-            this.anchorId = (this.anchorId % 3) + 1;
-            return this.anchorId.ToString();
+            return this.anchorsLen.ToString();
         }
 
 
 
-        private string CreateRequest(string anchorId)
+        private string CreateGetDistanceRequest(string anchorId)
         {
-            return $"{SharedConfig.ConfigManager.Get("GET_DISTANCE_COMMAND").Trim()}:{anchorId}";
+            return $"{SharedConfig.SerialCommand.GET_DISTANCE.ToWireString()}:{anchorId}";
         }
 
-        private async Task Send()
+        private string CreateGetPilotPositionRequest()
         {
-            Console.WriteLine("Sending time request to slave...");
-            this._serialPort.WriteLine(this.CreateRequest(this.GetAnchorId()));
+            return SharedConfig.SerialCommand.GET_PILOT_POSITION.ToWireString();
+
+        }
+
+        private void SendDistanceReq()
+        {
+            this._serialPort.WriteLine(this.CreateGetDistanceRequest(this.GetAnchorId()));
 
 
-            await Task.Delay(TimeSpan.FromSeconds(5));
         }
 
         private void OnDataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -69,9 +74,31 @@ namespace SimulationMaster.services
             {
                 this._serialPort.Open();
                 this._serialPort.DataReceived += OnDataReceived;
+                string req = "";
                 while (true)
                 {
-                    await this.Send();
+
+                    if (this.cycle)
+                    {
+                        Console.WriteLine("Sending pilot request to slave...");
+                        req = this.CreateGetPilotPositionRequest();
+                        this.cycle = false;
+                    }
+                    else
+                    {
+                        this.anchorsLen = (this.anchorsLen % 3) + 1;
+                        Console.WriteLine("Sending distance request to slave...");
+                        req = this.CreateGetDistanceRequest(this.GetAnchorId());
+                        if (this.anchorsLen == 3)
+                        {
+                            this.cycle = true;
+
+                        }
+                    }
+
+                    this._serialPort.WriteLine(req);
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+
                 }
 
             }

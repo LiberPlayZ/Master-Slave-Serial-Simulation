@@ -40,6 +40,23 @@ namespace SimulatorProject.services
             this.error = min + (random.NextDouble() * (max - min));
         }
 
+
+        public Point3D GetPilotPoint()
+        {
+            return this.pilot.GetPilotPointCopy();
+        }
+
+        private int GetDirectionMultiplyer(DirectionType direction)
+        {
+            return direction switch
+            {
+                DirectionType.LEFT or DirectionType.DOWN or DirectionType.BACKWARD => -1,
+                DirectionType.RIGHT or DirectionType.UP or DirectionType.FORWARD => 1,
+                _ => throw new ArgumentException("Invalid direction")
+            };
+
+        }
+
         private static string SetPilotSpeedType(string type)
         {
 
@@ -51,17 +68,6 @@ namespace SimulatorProject.services
             System.Console.WriteLine("pilot speed type is incorrectly and set to mps by deffualt .");
             return PilotSpeedType.METERS_PER_SECOND;
 
-
-        }
-
-        private int GetDirectionMultiplyer(DirectionType direction)
-        {
-            return direction switch
-            {
-                DirectionType.LEFT or DirectionType.DOWN or DirectionType.BACKWARD => -1,
-                DirectionType.RIGHT or DirectionType.UP or DirectionType.FORWARD => 1,
-                _ => throw new ArgumentException("Invalid direction")
-            };
 
         }
 

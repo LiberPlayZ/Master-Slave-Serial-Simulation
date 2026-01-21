@@ -27,7 +27,6 @@ The shared config comes from `.env` or environment variables. The default `.env`
 BAUD_RATE = 9600
 MAX_RANGE = 0.5
 MIN_RANGE = -0.5
-GET_DISTANCE_COMMAND = Get_Distance
 SLAVE_PORT_NAME = /tmp/ttyV0
 MASTER_PORT_NAME = /tmp/ttyV1
 RESPONSE_DELAY = 5.5
