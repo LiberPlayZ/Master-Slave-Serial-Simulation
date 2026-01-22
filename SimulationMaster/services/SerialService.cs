@@ -47,12 +47,6 @@ namespace SimulationMaster.services
 
         }
 
-        private void SendDistanceReq()
-        {
-            this._serialPort.WriteLine(this.CreateGetDistanceRequest(this.GetAnchorId()));
-
-
-        }
 
         private void OnDataReceived(object sender, SerialDataReceivedEventArgs e)
         {
@@ -60,7 +54,14 @@ namespace SimulationMaster.services
             try
             {
                 string response = port.ReadLine();
-                this._csvService.Log(response);
+                if (response.StartsWith("PILOT_POSITION:"))
+                {
+                    _csvService.LogPilotPosition(response);
+                }
+                else
+                {
+                    this._csvService.LogDistance(response);
+                }
 
                 Console.WriteLine($"[Master] Received: {response}");
 

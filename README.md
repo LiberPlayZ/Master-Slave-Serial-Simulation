@@ -3,15 +3,16 @@
 This repo contains a simple master/slave C# simulation that communicates over a serial link. The master periodically asks the slave for distance data, and the slave replies with a simulated distance based on a moving pilot point and static anchors.
 
 ## Projects
-- `SimulationMaster`: master process that sends `GET_DISTANCE` requests and logs responses to CSV.
-- `SimulatorProject`: slave process that listens on a serial port, simulates movement, and responds with distances.
+- `SimulationMaster`: master process that sends `GET_DISTANCE` and `GET_PILOT_POSITION` requests and logs responses to CSV.
+- `SimulatorProject`: slave process that listens on a serial port, simulates movement, and responds with distances and pilot position.
 - `SharedConfig`: shared configuration loader (reads `.env` or environment variables).
 - `virtual-ports-launch`: helper script to create a pair of virtual serial ports using `socat`.
 
 ## How it works
 - The master cycles anchor ids `1 -> 3` and sends `GET_DISTANCE:<id>` every 5 seconds.
+- After each full cycle (3 distance requests), the master sends a `GET_PILOT_POSITION` request.
 - The slave reads the request, advances the pilot position on the X axis based on time elapsed, computes Euclidean distance to the requested anchor, waits `RESPONSE_DELAY`, and replies.
-- The master writes each response to a CSV file with an added timestamp.
+- The master writes distance responses to one CSV and pilot position responses to another.
 
 ## Prerequisites
 - .NET 9 SDK
@@ -32,13 +33,15 @@ MASTER_PORT_NAME = /tmp/ttyV1
 RESPONSE_DELAY = 5.5
 PILOT_SPEED = 10
 PILOT_SPEED_TYPE = mps
-CSV_PATH = logs/output/log.csv
+LOGS_PATH = logs/output/
+DISTANCE_CSV_NAME=distance.log.csv
+PILOT_CSV_NAME = pilot.log.csv
 ```
 
 Notes:
 - `SLAVE_PORT_NAME` and `MASTER_PORT_NAME` must match your serial device names (virtual or physical).
 - `PILOT_SPEED_TYPE` supports `mps`, `kph`, or `mph`.
-- `CSV_PATH` is relative to the process working directory.
+- `LOGS_PATH` is relative to the process working directory.
 - `MIN_RANGE` and `MAX_RANGE` are currently defined but not used by the code.
 
 ### `SimulatorProject/config/SimulationConfig.json`
@@ -84,12 +87,13 @@ dotnet run
 
 ## Output
 - The slave prints incoming requests and outgoing replies.
-- The master prints each received response and writes a CSV row to `CSV_PATH`.
-- CSV header: `Timestamp,Time,Distance,Id`
-- Sample row format (actual values vary):
-  - `2025-01-01 12:00:00.123,Time: 00:00:05.000,distance: 4.12,Id: 2`
+- The master prints each received response and writes CSV rows to:
+  - Distance log: `LOGS_PATH` + `DISTANCE_CSV_NAME`
+  - Pilot log: `LOGS_PATH` + `PILOT_CSV_NAME`
+- Distance CSV header: `Timestamp,Time,Distance,Id`
+- Pilot CSV header: `Timestamp,X,Y,Z`
 
 ## Notes and limitations
 - The master currently cycles only anchor ids `1..3`. If you add more anchors, update `SimulationMaster/services/SerialService.cs`.
 - The slave moves the pilot along the X axis only; adjust `SimulationService.SetNewPilotCordinate` if you want more complex motion.
-- If you run the apps from a different working directory, adjust `CSV_PATH` and `config/SimulationConfig.json` paths accordingly.
+- If you run the apps from a different working directory, adjust `LOGS_PATH` and `config/SimulationConfig.json` paths accordingly.
