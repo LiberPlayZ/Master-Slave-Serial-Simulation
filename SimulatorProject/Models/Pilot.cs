@@ -24,7 +24,7 @@ namespace SimulatorProject.Models
         public Point3D GetPilotPointCopy()
         {
             // Return a copy so callers can't mutate internal state
-            return new Point3D(this.point.X, this.point.Y, this.point.Z);
+            return  this.point.GetPointCopy();
         }
 
 

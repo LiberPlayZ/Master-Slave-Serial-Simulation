@@ -23,7 +23,7 @@ namespace SharedConfig
                 ["PILOT_SPEED_TYPE"] = Environment.GetEnvironmentVariable("PILOT_SPEED_TYPE") ?? "mps",
                 ["LOGS_PATH"] = Environment.GetEnvironmentVariable("LOGS_PATH") ?? "logs/output/",
                 ["DISTANCE_CSV_NAME"] = Environment.GetEnvironmentVariable("DISTANCE_CSV_NAME") ?? "distance.log.csv",
-                ["PILOT_CSV_NAME"] = Environment.GetEnvironmentVariable("PILOT_CSV_NAME") ?? "pilot.log.csv",
+                ["POSITIONS_CSV_NAME"] = Environment.GetEnvironmentVariable("POSITIONS_CSV_NAME") ?? "positions.log.csv",
 
 
 

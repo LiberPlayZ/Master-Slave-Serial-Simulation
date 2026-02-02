@@ -47,6 +47,7 @@ namespace SimulatorProject.services
                         string[] parts = request.Split(':', 2);
                         string commandText = parts[0];
                         string response = "";
+                        string time = _timer.GetElapsedTime();
                         if (!SerialCommandExtensions.TryParseWireString(commandText, out var command))
                         {
                             sp.WriteLine("UNKNOWN_COMMAND");
@@ -60,18 +61,10 @@ namespace SimulatorProject.services
                                     sp.WriteLine("MISSING_ID");
                                     return;
                                 }
-                                string anchorId = parts[1];
-                                string time = _timer.GetElapsedTime();
-
-                                _simulationService.SetNewPilotCordinate(
-                                    _timer.GetTimePassFromLast(),
-                                    CordinateType.X,
-                                    DirectionType.BACKWARD);
-
-                                var anchor = _simulationService.helicopter.GetAnchorById(anchorId);
+                                var anchor = _simulationService.helicopter.GetAnchorById(parts[1]);
                                 response = anchor != null
-                                   ? $"Time: {time},distance: {_simulationService.CalaculateDistance(anchor)},Id: {anchorId}"
-                                   : $"Time: {time},No anchor found";
+                                   ? $"DISTANCE,{time},{_simulationService.CalaculateDistance(anchor)},{parts[1]}"
+                                   : $"DISTANCE,{time},NA,{parts[1]}";
                                 break;
 
                             case SerialCommand.GET_PILOT_POSITION:
@@ -81,7 +74,19 @@ namespace SimulatorProject.services
                                     DirectionType.BACKWARD);
 
                                 var point = _simulationService.GetPilotPoint();
-                                response = $"PILOT_POSITION:{point.X},{point.Y},{point.Z}";
+                                response = $"PILOT_POSITION,{time},{point.X},{point.Y},{point.Z}";
+                                break;
+
+                            case SerialCommand.GET_ANCHOR_POSITION:
+                                if (parts.Length < 2)
+                                {
+                                    sp.WriteLine("MISSING_ID");
+                                    return;
+                                }
+                                var anchorPosition = _simulationService.helicopter.GetAnchorById(parts[1]);
+                                response = anchorPosition != null
+                                    ? $"ANCHOR_POSITION,{time},{anchorPosition.Id},{anchorPosition.point.X},{anchorPosition.point.Y},{anchorPosition.point.Z}"
+                                    : $"ANCHOR_POSITION,{time},{parts[1]},NA,NA,NA";
                                 break;
 
                             default:

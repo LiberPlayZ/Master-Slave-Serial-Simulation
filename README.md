@@ -35,7 +35,7 @@ PILOT_SPEED = 10
 PILOT_SPEED_TYPE = mps
 LOGS_PATH = logs/output/
 DISTANCE_CSV_NAME=distance.log.csv
-PILOT_CSV_NAME = pilot.log.csv
+POSITIONS_CSV_NAME = positions.log.csv
 ```
 
 Notes:

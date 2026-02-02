@@ -15,6 +15,12 @@ namespace SimulatorProject.Models
 
         public double Z { get; set; } = z;
 
+
+        public Point3D GetPointCopy()
+        {
+            return new Point3D(this.X, this.Y, this.Z);
+        }
+
         public override string ToString()
         {
             return $"({this.X},{this.Y},{this.Z})";

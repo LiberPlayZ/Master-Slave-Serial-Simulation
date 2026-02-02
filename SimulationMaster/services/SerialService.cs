@@ -12,9 +12,6 @@ namespace SimulationMaster.services
 
         private readonly CsvService _csvService;
 
-        private int anchorsLen = 3;
-
-        private bool cycle = false;
 
         public SerialService(CsvService csvService)
         {
@@ -29,12 +26,7 @@ namespace SimulationMaster.services
 
         }
 
-        private string GetAnchorId()
-        {
-            return this.anchorsLen.ToString();
-        }
-
-
+  
 
         private string CreateGetDistanceRequest(string anchorId)
         {
@@ -47,6 +39,44 @@ namespace SimulationMaster.services
 
         }
 
+        private string CreateGetAnchorPositionRequest(string anchorId)
+        {
+            return $"{SerialCommand.GET_ANCHOR_POSITION.ToWireString()}:{anchorId}";
+
+        }
+
+
+
+        private string? BuildRequestFromInput(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return null;
+
+            var parts = input.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var command = parts[0].ToLowerInvariant();
+
+            switch (command)
+            {
+                case "distance":
+                    if (parts.Length < 2) return null;
+                    return this.CreateGetDistanceRequest(parts[1]);
+
+                case "pilot":
+                    return this.CreateGetPilotPositionRequest();
+
+                case "anchor":
+                    if (parts.Length < 2) return null;
+                    return this.CreateGetAnchorPositionRequest(parts[1]);
+
+                case "help":
+                    return "HELP";
+
+                default:
+                    return null;
+            }
+        }
+
+
 
         private void OnDataReceived(object sender, SerialDataReceivedEventArgs e)
         {
@@ -54,9 +84,9 @@ namespace SimulationMaster.services
             try
             {
                 string response = port.ReadLine();
-                if (response.StartsWith("PILOT_POSITION:"))
+                if (response.StartsWith("PILOT_POSITION,") || response.StartsWith("ANCHOR_POSITION,"))
                 {
-                    _csvService.LogPilotPosition(response);
+                    _csvService.LogPosition(response);
                 }
                 else
                 {
@@ -75,32 +105,35 @@ namespace SimulationMaster.services
             {
                 this._serialPort.Open();
                 this._serialPort.DataReceived += OnDataReceived;
-                string req = "";
+                Console.WriteLine("Enter commands: distance <id>, pilot, anchor <id>, help, exit");
                 while (true)
                 {
+                    var input = Console.ReadLine();
+                    if (input == null) continue;
 
-                    if (this.cycle)
-                    {
-                        Console.WriteLine("Sending pilot request to slave...");
-                        req = this.CreateGetPilotPositionRequest();
-                        this.cycle = false;
-                    }
-                    else
-                    {
-                        this.anchorsLen = (this.anchorsLen % 3) + 1;
-                        Console.WriteLine("Sending distance request to slave...");
-                        req = this.CreateGetDistanceRequest(this.GetAnchorId());
-                        if (this.anchorsLen == 3)
-                        {
-                            this.cycle = true;
+                    if (input.Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
+                        break;
 
-                        }
+                    var request = BuildRequestFromInput(input);
+
+                    if (request == "HELP")
+                    {
+                        Console.WriteLine("Commands: distance <id>, pilot, anchor <id>, exit");
+                        continue;
                     }
 
-                    this._serialPort.WriteLine(req);
-                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    if (request == null)
+                    {
+                        Console.WriteLine("Unknown command. Try: distance <id>, pilot, anchor <id>");
+                        continue;
+                    }
 
+                    _serialPort.WriteLine(request);
                 }
+
+                await Task.Delay(TimeSpan.FromSeconds(5));
+
+
 
             }
             catch (Exception ex)

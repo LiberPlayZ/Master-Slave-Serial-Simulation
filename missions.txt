@@ -1,0 +1,5 @@
+1.Parse PILOT_POSITION on the master and log it to a separate CSV.
+2.Add GET_ANCHOR_POSITION:<id> command so master can query anchor coordinates.
+3.Add message IDs + ACK/Retry to make the protocol reliable.
+4.Add noise/error to distance calculation to simulate real sensors.
+5.Add a simple live plot (CLI or small web app) of distances and position.
