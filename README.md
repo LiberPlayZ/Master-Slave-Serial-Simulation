@@ -9,10 +9,26 @@ This repo contains a simple master/slave C# simulation that communicates over a 
 - `virtual-ports-launch`: helper script to create a pair of virtual serial ports using `socat`.
 
 ## How it works
-- The master cycles anchor ids `1 -> 3` and sends `GET_DISTANCE:<id>` every 5 seconds.
-- After each full cycle (3 distance requests), the master sends a `GET_PILOT_POSITION` request.
-- The slave reads the request, advances the pilot position on the X axis based on time elapsed, computes Euclidean distance to the requested anchor, waits `RESPONSE_DELAY`, and replies.
-- The master writes distance responses to one CSV and pilot position responses to another.
+- The master runs in interactive mode. You type commands like `distance 2`, `pilot`, or `anchor 1`.
+- Each request is wrapped with a request id (`REQ,<id>,...`) so responses can be correlated. The master uses UUIDs for ids.
+- The slave ACKs each request (`ACK,<id>`) before sending the data response.
+- ACKs make the link more reliable: if the master doesn’t receive an ACK in time, it retries the request.
+- The slave advances the pilot position on the X axis based on time elapsed, computes the requested values, waits `RESPONSE_DELAY`, and replies.
+- The master writes distance responses to one CSV and position responses to another.
+
+## Wire protocol (current)
+Requests (master → slave):
+- `REQ,<id>,GET_DISTANCE,<anchorId>` (id is a UUID string)
+- `REQ,<id>,GET_PILOT_POSITION` (id is a UUID string)
+- `REQ,<id>,GET_ANCHOR_POSITION,<anchorId>` (id is a UUID string)
+
+ACK (slave → master):
+- `ACK,<id>` (id is a UUID string)
+
+Responses (slave → master):
+- `DISTANCE,<id>,<timer>,<distance>,<anchorId>` (id is a UUID string)
+- `PILOT_POSITION,<id>,<timer>,<x>,<y>,<z>` (id is a UUID string)
+- `ANCHOR_POSITION,<id>,<timer>,<anchorId>,<x>,<y>,<z>` (id is a UUID string)
 
 ## Prerequisites
 - .NET 9 SDK
@@ -36,12 +52,15 @@ PILOT_SPEED_TYPE = mps
 LOGS_PATH = logs/output/
 DISTANCE_CSV_NAME=distance.log.csv
 POSITIONS_CSV_NAME = positions.log.csv
+ACK_MAX_RETRIES = 3
+ACK_TIMEOUT_MS = 2000
 ```
 
 Notes:
 - `SLAVE_PORT_NAME` and `MASTER_PORT_NAME` must match your serial device names (virtual or physical).
 - `PILOT_SPEED_TYPE` supports `mps`, `kph`, or `mph`.
 - `LOGS_PATH` is relative to the process working directory.
+- `ACK_MAX_RETRIES` and `ACK_TIMEOUT_MS` control how long the master waits for ACKs before retrying.
 - `MIN_RANGE` and `MAX_RANGE` are currently defined but not used by the code.
 
 ### `SimulatorProject/config/SimulationConfig.json`
@@ -89,11 +108,11 @@ dotnet run
 - The slave prints incoming requests and outgoing replies.
 - The master prints each received response and writes CSV rows to:
   - Distance log: `LOGS_PATH` + `DISTANCE_CSV_NAME`
-  - Pilot log: `LOGS_PATH` + `PILOT_CSV_NAME`
-- Distance CSV header: `Timestamp,Time,Distance,Id`
-- Pilot CSV header: `Timestamp,X,Y,Z`
+  - Positions log: `LOGS_PATH` + `POSITIONS_CSV_NAME`
+- Distance CSV header: `Timestamp,RequestId,Timer,Distance,Id`
+- Positions CSV header: `Timestamp,RequestId,Timer,Type,Id,X,Y,Z`
 
 ## Notes and limitations
-- The master currently cycles only anchor ids `1..3`. If you add more anchors, update `SimulationMaster/services/SerialService.cs`.
+- The master is interactive. Use `distance <id>`, `pilot`, and `anchor <id>` from the console.
 - The slave moves the pilot along the X axis only; adjust `SimulationService.SetNewPilotCordinate` if you want more complex motion.
 - If you run the apps from a different working directory, adjust `LOGS_PATH` and `config/SimulationConfig.json` paths accordingly.

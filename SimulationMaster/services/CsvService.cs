@@ -34,14 +34,14 @@ namespace SimulationMaster.services
             {
                 using (var writer = new StreamWriter(this._distanceFilePath, false))
                 {
-                    writer.WriteLine("Timestamp,Timer,Distance,Id\n");
+                    writer.WriteLine("Timestamp,RequestId,Timer,Distance,Id\n");
                 }
             }
             if (!File.Exists(this._positionsFilePath))
             {
                 using (var writer = new StreamWriter(this._positionsFilePath, false))
                 {
-                    writer.WriteLine("Timestamp,Timer,Pilot/Anchor,X,Y,Z\n");
+                    writer.WriteLine("Timestamp,RequestId,Timer,Type,Id,X,Y,Z\n");
                 }
             }
 
@@ -52,37 +52,37 @@ namespace SimulationMaster.services
         public void LogDistance(string response)
         {
             var parts = response.Split(',');
-            if (parts.Length < 4 || parts[0] != "DISTANCE")
+            if (parts.Length < 5 || parts[0] != "DISTANCE")
             {
                 System.Console.WriteLine("Unknown distance response");
                 return;
             }
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            var line = $"{timestamp},{parts[1]},{parts[2]},{parts[3]}";
+            var line = $"{timestamp},{parts[1]},{parts[2]},{parts[3]},{parts[4]}";
             File.AppendAllText(_distanceFilePath, line + Environment.NewLine);
         }
         public void LogPosition(string response)
         {
             var parts = response.Split(',');
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            if (parts.Length < 5)
+            if (parts.Length < 6)
             {
                 System.Console.WriteLine("Unknown response");
                 return;
             }
             if (parts[0] == "PILOT_POSITION")
             {
-                var line = $"{timestamp},{parts[1]},Pilot,{parts[2]},{parts[3]},{parts[4]}";
+                var line = $"{timestamp},{parts[1]},{parts[2]},Pilot,,{parts[3]},{parts[4]},{parts[5]}";
                 File.AppendAllText(_positionsFilePath, line + Environment.NewLine);
             }
             else if (parts[0] == "ANCHOR_POSITION")
             {
-                if (parts.Length < 6)
+                if (parts.Length < 7)
                 {
                     System.Console.WriteLine("Unknown response");
                     return;
                 }
-                var line = $"{timestamp},{parts[1]},Anchor-{parts[2]},{parts[3]},{parts[4]},{parts[5]}";
+                var line = $"{timestamp},{parts[1]},{parts[2]},Anchor,{parts[3]},{parts[4]},{parts[5]},{parts[6]}";
                 File.AppendAllText(_positionsFilePath, line + Environment.NewLine);
             }
             else

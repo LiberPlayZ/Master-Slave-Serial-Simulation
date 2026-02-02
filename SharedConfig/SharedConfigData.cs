@@ -24,6 +24,8 @@ namespace SharedConfig
                 ["LOGS_PATH"] = Environment.GetEnvironmentVariable("LOGS_PATH") ?? "logs/output/",
                 ["DISTANCE_CSV_NAME"] = Environment.GetEnvironmentVariable("DISTANCE_CSV_NAME") ?? "distance.log.csv",
                 ["POSITIONS_CSV_NAME"] = Environment.GetEnvironmentVariable("POSITIONS_CSV_NAME") ?? "positions.log.csv",
+                ["ACK_MAX_RETRIES"] = Environment.GetEnvironmentVariable("ACK_MAX_RETRIES") ?? "3",
+                ["ACK_TIMEOUT_MS"] = Environment.GetEnvironmentVariable("ACK_TIMEOUT_MS") ?? "2000",
 
 
 
