@@ -79,6 +79,26 @@ Defines initial anchor locations and the pilot position in 3D space:
 
 ## Running locally
 
+### One command (tmux)
+Use the tmux launcher to start virtual ports, the slave, and the master in one window with splits:
+
+```bash
+bash scripts/run-all.sh
+```
+
+Reset (kills existing session and relaunches):
+
+```bash
+bash scripts/run-all.sh --reset
+```
+
+The tmux layout:
+- Left pane: virtual ports (`socat`)
+- Right top: slave
+- Right bottom: master (interactive input)
+
+### Or manual running
+
 ### 1) Create virtual serial ports (Linux)
 In one terminal:
 
