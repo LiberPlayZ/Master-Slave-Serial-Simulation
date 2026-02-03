@@ -60,4 +60,6 @@ publish/
 global.json.lock
 
 
-SimulationMaster/logs/
+SimulationMaster/logs/# Frontend
+visualizer-ui/node_modules/
+visualizer-ui/dist/

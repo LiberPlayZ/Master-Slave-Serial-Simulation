@@ -190,3 +190,25 @@ dotnet run
 - The master is interactive. Use `distance <id>`, `pilot`, `anchor <id>`, `status`, `noise <min> <max>`, and `jitter <ms>` from the console.
 - The slave moves the pilot along the X axis only; adjust `SimulationService.SetNewPilotCordinate` if you want more complex motion.
 - If you run the apps from a different working directory, adjust `LOGS_PATH` and `config/SimulationConfig.json` paths accordingly.
+
+## Visualizer UI (React)
+To run the React frontend (WebSocket client):
+
+```bash
+cd visualizer-ui
+npm run dev
+```
+
+Then open:
+
+```
+http://localhost:5173
+```
+
+The React UI connects to the Visualizer gateway WebSocket at `ws://localhost:5080/ws`.
+Make sure the Visualizer backend is running:
+
+```bash
+cd Visualizer
+dotnet run
+```
