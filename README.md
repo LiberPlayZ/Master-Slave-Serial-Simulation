@@ -6,6 +6,7 @@ This repo contains a simple master/slave C# simulation that communicates over a 
 - `SimulationMaster`: master process that sends `GET_DISTANCE` and `GET_PILOT_POSITION` requests and logs responses to CSV.
 - `SimulatorProject`: slave process that listens on a serial port, simulates movement, and responds with distances and pilot position.
 - `SharedConfig`: shared configuration loader (reads `.env` or environment variables).
+- `Visualizer`: lightweight web UI that streams data from CSV logs over WebSockets.
 - `virtual-ports-launch`: helper script to create a pair of virtual serial ports using `socat`.
 
 ## How it works
@@ -112,6 +113,22 @@ The tmux layout:
 - Left pane: virtual ports (`socat`)
 - Right top: slave
 - Right bottom: master (interactive input)
+
+### Visualizer (web UI)
+Start the web UI in a separate terminal:
+
+```bash
+cd Visualizer
+dotnet run
+```
+
+Then open:
+
+```
+http://localhost:5080
+```
+
+The visualizer reads the CSV logs and streams updates to the browser. Keep the master running so the logs update.
 
 ### Mock responses (no slave)
 If you want to test the master logging without running the slave, send mock status responses:

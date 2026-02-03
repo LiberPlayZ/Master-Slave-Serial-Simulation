@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Serial Visualizer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Serial Visualizer</h1>
+    <div id="status" class="status">Connecting...</div>
+  </header>
+
+  <main>
+    <section class="chart">
+      <h2>Distance Over Time</h2>
+      <canvas id="distanceChart" width="900" height="320"></canvas>
+      <div class="chart-meta">
+        <span id="distanceLatest">Latest: n/a</span>
+        <span id="distanceCount">Samples: 0</span>
+      </div>
+    </section>
+
+    <section class="positions">
+      <h2>Positions</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Id</th>
+            <th>X</th>
+            <th>Y</th>
+            <th>Z</th>
+            <th>Timer</th>
+            <th>Request</th>
+          </tr>
+        </thead>
+        <tbody id="positionsBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
