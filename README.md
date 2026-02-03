@@ -22,6 +22,8 @@ Requests (master → slave):
 - `REQ,<id>,GET_PILOT_POSITION` (id is a UUID string)
 - `REQ,<id>,GET_ANCHOR_POSITION,<anchorId>` (id is a UUID string)
 - `REQ,<id>,GET_STATUS` (id is a UUID string)
+- `REQ,<id>,SET_NOISE,<min>,<max>` (id is a UUID string)
+- `REQ,<id>,SET_JITTER,<ms>` (id is a UUID string)
 
 ACK (slave → master):
 - `ACK,<id>` (id is a UUID string)
@@ -32,6 +34,8 @@ Responses (slave → master):
 - `ANCHOR_POSITION,<id>,<timer>,<anchorId>,<x>,<y>,<z>` (id is a UUID string)
 - `STATUS_PILOT,<id>,<timer>,<x>,<y>,<z>` (id is a UUID string)
 - `STATUS_ANCHOR,<id>,<timer>,<anchorId>,<x>,<y>,<z>` (id is a UUID string)
+- `CONFIG_NOISE,<id>,<min>,<max>` (id is a UUID string)
+- `CONFIG_JITTER,<id>,<ms>` (id is a UUID string)
 
 ## Prerequisites
 - .NET 9 SDK
@@ -69,7 +73,10 @@ Notes:
 - `ACK_MAX_RETRIES` and `ACK_TIMEOUT_MS` control how long the master waits for ACKs before retrying.
 - `DISTANCE_NOISE_MIN` / `DISTANCE_NOISE_MAX` add uniform noise to distance responses (in the same units as distance).
 - `RESPONSE_JITTER_MS` adds random response delay on top of `RESPONSE_DELAY`.
+- Noise simulates sensor error: each distance is adjusted by a random value between `DISTANCE_NOISE_MIN` and `DISTANCE_NOISE_MAX`.
 - Jitter simulates real device variability (processing time, OS scheduling, buffering), so responses are not perfectly uniform.
+- `noise off` (master command) sends `SET_NOISE,0,0` to the slave, which disables distance noise and returns exact distances.
+- `jitter off` (master command) sends `SET_JITTER,0` to the slave, which disables extra random delay.
 - `MIN_RANGE` and `MAX_RANGE` are currently defined but not used by the code.
 
 ### `SimulatorProject/config/SimulationConfig.json`
@@ -105,6 +112,27 @@ The tmux layout:
 - Left pane: virtual ports (`socat`)
 - Right top: slave
 - Right bottom: master (interactive input)
+
+### Mock responses (no slave)
+If you want to test the master logging without running the slave, send mock status responses:
+
+```bash
+bash scripts/mock-responses.sh
+```
+
+You can pass a custom port and request id:
+
+```bash
+bash scripts/mock-responses.sh /tmp/ttyV1 mytestid
+```
+
+Why use this:
+- It lets you test the master CSV parsing and logging without the simulator running.
+- It is useful for debugging the master UI and CSV output format quickly.
+
+How it works:
+- It writes a fake ACK and a few `STATUS_*` lines directly to the master port.
+- The master treats them like real responses and logs them to `positions.log.csv`.
 
 ### Or manual running
 
@@ -142,6 +170,6 @@ dotnet run
 - Positions CSV header: `Timestamp,RequestId,Timer,Type,Id,X,Y,Z`
 
 ## Notes and limitations
-- The master is interactive. Use `distance <id>`, `pilot`, and `anchor <id>` from the console.
+- The master is interactive. Use `distance <id>`, `pilot`, `anchor <id>`, `status`, `noise <min> <max>`, and `jitter <ms>` from the console.
 - The slave moves the pilot along the X axis only; adjust `SimulationService.SetNewPilotCordinate` if you want more complex motion.
 - If you run the apps from a different working directory, adjust `LOGS_PATH` and `config/SimulationConfig.json` paths accordingly.

@@ -8,7 +8,9 @@ namespace SharedConfig
         GET_DISTANCE,
         GET_PILOT_POSITION,
         GET_ANCHOR_POSITION,
-        GET_STATUS
+        GET_STATUS,
+        SET_NOISE,
+        SET_JITTER
     }
 
     public static class SerialCommandExtensions
@@ -21,6 +23,8 @@ namespace SharedConfig
                 SerialCommand.GET_PILOT_POSITION => "GET_PILOT_POSITION",
                 SerialCommand.GET_ANCHOR_POSITION => "GET_ANCHOR_POSITION",
                 SerialCommand.GET_STATUS => "GET_STATUS",
+                SerialCommand.SET_NOISE => "SET_NOISE",
+                SerialCommand.SET_JITTER => "SET_JITTER",
                 _ => "UNKNOWN"
             };
         }
@@ -40,6 +44,12 @@ namespace SharedConfig
                     return true;
                 case "GET_STATUS":
                     command = SerialCommand.GET_STATUS;
+                    return true;
+                case "SET_NOISE":
+                    command = SerialCommand.SET_NOISE;
+                    return true;
+                case "SET_JITTER":
+                    command = SerialCommand.SET_JITTER;
                     return true;
                 default:
                     command = default;

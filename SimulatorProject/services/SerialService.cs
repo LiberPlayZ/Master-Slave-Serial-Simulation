@@ -14,6 +14,9 @@ namespace SimulatorProject.services
         private readonly TimerService _timer;
 
         private readonly SimulationService _simulationService;
+        private double _distanceNoiseMin;
+        private double _distanceNoiseMax;
+        private double _responseJitterMs;
 
 
         public SerialService(TimerService timer, SimulationService simulationService)
@@ -26,6 +29,9 @@ namespace SimulatorProject.services
                 ReadTimeout = 5000,
                 WriteTimeout = 5000
             };
+            _distanceNoiseMin = ConfigManager.GetDouble("DISTANCE_NOISE_MIN");
+            _distanceNoiseMax = ConfigManager.GetDouble("DISTANCE_NOISE_MAX");
+            _responseJitterMs = ConfigManager.GetDouble("RESPONSE_JITTER_MS");
 
         }
 
@@ -78,8 +84,8 @@ namespace SimulatorProject.services
                                 var anchor = _simulationService.helicopter.GetAnchorById(param);
                                 if (anchor != null)
                                 {
-                                    double noiseMin = ConfigManager.GetDouble("DISTANCE_NOISE_MIN");
-                                    double noiseMax = ConfigManager.GetDouble("DISTANCE_NOISE_MAX");
+                                    double noiseMin = _distanceNoiseMin;
+                                    double noiseMax = _distanceNoiseMax;
                                     if (noiseMin > noiseMax)
                                     {
                                         var temp = noiseMin;
@@ -129,6 +135,34 @@ namespace SimulatorProject.services
                                     responses.Add($"STATUS_ANCHOR,{requestId},{time},{statusAnchor.Id},{statusAnchor.point.X},{statusAnchor.point.Y},{statusAnchor.point.Z}");
                                 }
                                 break;
+                            case SerialCommand.SET_NOISE:
+                                if (string.IsNullOrWhiteSpace(param))
+                                {
+                                    sp.WriteLine("MISSING_PARAMS");
+                                    return;
+                                }
+                                var noiseParts = param.Split(',', 2);
+                                if (noiseParts.Length < 2 ||
+                                    !double.TryParse(noiseParts[0], out var minNoise) ||
+                                    !double.TryParse(noiseParts[1], out var maxNoise))
+                                {
+                                    sp.WriteLine("BAD_PARAMS");
+                                    return;
+                                }
+                                _distanceNoiseMin = minNoise;
+                                _distanceNoiseMax = maxNoise;
+                                responses.Add($"CONFIG_NOISE,{requestId},{_distanceNoiseMin},{_distanceNoiseMax}");
+                                break;
+                            case SerialCommand.SET_JITTER:
+                                if (string.IsNullOrWhiteSpace(param) ||
+                                    !double.TryParse(param, out var jitterMs))
+                                {
+                                    sp.WriteLine("BAD_PARAMS");
+                                    return;
+                                }
+                                _responseJitterMs = jitterMs;
+                                responses.Add($"CONFIG_JITTER,{requestId},{_responseJitterMs}");
+                                break;
 
                             default:
                                 sp.WriteLine("UNKNOWN_COMMAND");
@@ -136,7 +170,7 @@ namespace SimulatorProject.services
                         }
 
                         double baseDelay = ConfigManager.GetDouble("RESPONSE_DELAY");
-                        double jitterMax = ConfigManager.GetDouble("RESPONSE_JITTER_MS");
+                        double jitterMax = _responseJitterMs;
                         if (jitterMax < 0)
                         {
                             jitterMax = 0;

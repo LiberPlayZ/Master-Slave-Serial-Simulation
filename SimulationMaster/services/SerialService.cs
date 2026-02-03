@@ -13,6 +13,7 @@ namespace SimulationMaster.services
         private readonly CsvService _csvService;
         private readonly int _maxRetries;
         private readonly int _timeoutMs;
+        private string? _lastStatusId;
         private readonly object _ackLock = new();
         private TaskCompletionSource<string>? _ackTcs;
         private string? _pendingAckId;
@@ -58,6 +59,22 @@ namespace SimulationMaster.services
 
                 case "status":
                     return "GET_STATUS";
+
+                case "noise":
+                    if (parts.Length == 2 && parts[1].Equals("off", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "SET_NOISE,0,0";
+                    }
+                    if (parts.Length < 3) return null;
+                    return $"SET_NOISE,{parts[1]},{parts[2]}";
+
+                case "jitter":
+                    if (parts.Length == 2 && parts[1].Equals("off", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "SET_JITTER,0";
+                    }
+                    if (parts.Length < 2) return null;
+                    return $"SET_JITTER,{parts[1]}";
 
                 case "help":
                     return "HELP";
@@ -115,8 +132,12 @@ namespace SimulationMaster.services
                     }
                     return;
                 }
-                if (response.StartsWith("PILOT_POSITION,") || response.StartsWith("ANCHOR_POSITION,") ||
-                    response.StartsWith("STATUS_PILOT,") || response.StartsWith("STATUS_ANCHOR,"))
+                if (response.StartsWith("STATUS_PILOT,") || response.StartsWith("STATUS_ANCHOR,"))
+                {
+                    PrintStatus(response);
+                    _csvService.LogPosition(response);
+                }
+                else if (response.StartsWith("PILOT_POSITION,") || response.StartsWith("ANCHOR_POSITION,"))
                 {
                     _csvService.LogPosition(response);
                 }
@@ -137,7 +158,7 @@ namespace SimulationMaster.services
             {
                 this._serialPort.Open();
                 this._serialPort.DataReceived += OnDataReceived;
-                Console.WriteLine("Enter commands: distance <id>, pilot, anchor <id>, status, help, exit");
+                Console.WriteLine("Enter commands: distance <id>, pilot, anchor <id>, status, noise <min> <max>, jitter <ms>, help, exit");
                 while (true)
                 {
                     var input = Console.ReadLine();
@@ -150,13 +171,13 @@ namespace SimulationMaster.services
 
                     if (payload == "HELP")
                     {
-                        Console.WriteLine("Commands: distance <id>, pilot, anchor <id>, status, exit");
+                        Console.WriteLine("Commands: distance <id>, pilot, anchor <id>, status, noise <min> <max>, jitter <ms>, exit");
                         continue;
                     }
 
                     if (payload == null)
                     {
-                        Console.WriteLine("Unknown command. Try: distance <id>, pilot, anchor <id>, status");
+                        Console.WriteLine("Unknown command. Try: distance <id>, pilot, anchor <id>, status, noise <min> <max>, jitter <ms>");
                         continue;
                     }
 
@@ -172,6 +193,35 @@ namespace SimulationMaster.services
             catch (Exception ex)
             {
                 Console.WriteLine($"Serial error: {ex.Message}");
+            }
+        }
+
+        private void PrintStatus(string response)
+        {
+            var parts = response.Split(',');
+            if (parts.Length < 6)
+            {
+                return;
+            }
+            var requestId = parts[1];
+            var timer = parts[2];
+            if (parts[0] == "STATUS_PILOT")
+            {
+                if (_lastStatusId != requestId)
+                {
+                    _lastStatusId = requestId;
+                    Console.WriteLine($"[Status {requestId}] Timer {timer}");
+                }
+                Console.WriteLine($"  Pilot: ({parts[3]}, {parts[4]}, {parts[5]})");
+            }
+            else if (parts[0] == "STATUS_ANCHOR" && parts.Length >= 7)
+            {
+                if (_lastStatusId != requestId)
+                {
+                    _lastStatusId = requestId;
+                    Console.WriteLine($"[Status {requestId}] Timer {timer}");
+                }
+                Console.WriteLine($"  Anchor {parts[3]}: ({parts[4]}, {parts[5]}, {parts[6]})");
             }
         }
     }
