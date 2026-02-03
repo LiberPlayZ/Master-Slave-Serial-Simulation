@@ -10,9 +10,6 @@ builder.Services.AddSingleton<LogBroadcaster>();
 builder.Services.AddHostedService<LogTailService>();
 
 var app = builder.Build();
-
-app.UseDefaultFiles();
-app.UseStaticFiles();
 app.UseWebSockets();
 
 app.MapGet("/health", () => Results.Ok("ok"));
@@ -55,7 +52,9 @@ app.Map("/ws", async context =>
     }
 });
 
-app.Run("http://localhost:5080");
+var host = ConfigManager.Get("VISUALIZER_HOST").Trim();
+var port = ConfigManager.GetInt("VISUALIZER_PORT");
+app.Run($"http://{host}:{port}");
 
 sealed class LogBroadcaster
 {

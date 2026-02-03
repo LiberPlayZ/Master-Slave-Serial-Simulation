@@ -29,6 +29,8 @@ namespace SharedConfig
                 ["DISTANCE_NOISE_MIN"] = Environment.GetEnvironmentVariable("DISTANCE_NOISE_MIN") ?? "0",
                 ["DISTANCE_NOISE_MAX"] = Environment.GetEnvironmentVariable("DISTANCE_NOISE_MAX") ?? "0",
                 ["RESPONSE_JITTER_MS"] = Environment.GetEnvironmentVariable("RESPONSE_JITTER_MS") ?? "0",
+                ["VISUALIZER_HOST"] = Environment.GetEnvironmentVariable("VISUALIZER_HOST") ?? "localhost",
+                ["VISUALIZER_PORT"] = Environment.GetEnvironmentVariable("VISUALIZER_PORT") ?? "5080",
 
 
 

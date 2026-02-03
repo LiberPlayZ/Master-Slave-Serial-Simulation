@@ -65,6 +65,8 @@ ACK_TIMEOUT_MS = 2000
 DISTANCE_NOISE_MIN = 0
 DISTANCE_NOISE_MAX = 0
 RESPONSE_JITTER_MS = 0
+VISUALIZER_HOST = localhost
+VISUALIZER_PORT = 5080
 ```
 
 Notes:
@@ -78,6 +80,7 @@ Notes:
 - Jitter simulates real device variability (processing time, OS scheduling, buffering), so responses are not perfectly uniform.
 - `noise off` (master command) sends `SET_NOISE,0,0` to the slave, which disables distance noise and returns exact distances.
 - `jitter off` (master command) sends `SET_JITTER,0` to the slave, which disables extra random delay.
+- `VISUALIZER_HOST` / `VISUALIZER_PORT` control where the Visualizer gateway serves the WebSocket.
 - `MIN_RANGE` and `MAX_RANGE` are currently defined but not used by the code.
 
 ### `SimulatorProject/config/SimulationConfig.json`
@@ -114,21 +117,15 @@ The tmux layout:
 - Right top: slave
 - Right bottom: master (interactive input)
 
-### Visualizer (web UI)
-Start the web UI in a separate terminal:
+### Visualizer (gateway)
+Start the gateway in a separate terminal:
 
 ```bash
 cd Visualizer
 dotnet run
 ```
 
-Then open:
-
-```
-http://localhost:5080
-```
-
-The visualizer reads the CSV logs and streams updates to the browser. Keep the master running so the logs update.
+The gateway reads the CSV logs and streams updates to WebSocket clients.
 
 ### Mock responses (no slave)
 If you want to test the master logging without running the slave, send mock status responses:
