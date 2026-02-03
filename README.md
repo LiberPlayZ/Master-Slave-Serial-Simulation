@@ -1,52 +1,125 @@
 # Serial Simulation
 
-This repo contains a simple master/slave C# simulation that communicates over a serial link. The master periodically asks the slave for distance data, and the slave replies with a simulated distance based on a moving pilot point and static anchors.
+Master/slave serial simulation with CSV logging, ACK/retry protocol, and a live Visualizer (gateway + React UI).
+
+## Requirements
+- .NET 9 SDK
+- Node.js 20+ (for the React UI)
+- `socat` (Linux virtual serial ports)
+- Bash
+- `tmux` (only if you use the `run-all.sh` launcher)
 
 ## Projects
-- `SimulationMaster`: master process that sends `GET_DISTANCE` and `GET_PILOT_POSITION` requests and logs responses to CSV.
-- `SimulatorProject`: slave process that listens on a serial port, simulates movement, and responds with distances and pilot position.
-- `SharedConfig`: shared configuration loader (reads `.env` or environment variables).
-- `Visualizer`: lightweight web UI that streams data from CSV logs over WebSockets.
-- `virtual-ports-launch`: helper script to create a pair of virtual serial ports using `socat`.
+- `SimulationMaster`: master process; interactive commands; logs responses to CSV.
+- `SimulatorProject`: slave process; simulates movement and responds over serial.
+- `SharedConfig`: shared configuration loader (`.env` or environment variables).
+- `Visualizer`: ASP.NET minimal API + WebSocket gateway that streams CSV data as JSON.
+- `visualizer-ui`: React (Vite) UI that renders distance chart + positions table.
+- `virtual-ports-launch`: helper script to create a pair of virtual serial ports.
 
-## How it works
-- The master runs in interactive mode. You type commands like `distance 2`, `pilot`, `anchor 1`, or `status`.
-- Each request is wrapped with a request id (`REQ,<id>,...`) so responses can be correlated. The master uses UUIDs for ids.
-- The slave ACKs each request (`ACK,<id>`) before sending the data response.
-- ACKs make the link more reliable: if the master doesn’t receive an ACK in time, it retries the request.
-- The slave advances the pilot position on the X axis based on time elapsed, computes the requested values, waits `RESPONSE_DELAY`, and replies.
-- The master writes distance responses to one CSV and position responses to another.
+## How It Works
+- Master sends requests like `GET_DISTANCE`, `GET_PILOT_POSITION`, `GET_ANCHOR_POSITION`, and `GET_STATUS`.
+- Each request is wrapped with a request id: `REQ,<id>,...` (UUID).
+- Slave ACKs each request (`ACK,<id>`) before sending the data response.
+- Master retries if the ACK is not received in time.
+- Slave advances the pilot position over time, computes responses, applies optional noise/jitter, then replies.
+- Master writes distance and position responses to separate CSV files.
 
-## Wire protocol (current)
+## Quick Start (tmux launcher)
+Starts virtual ports + slave + master in one tmux session, and the gateway + React UI in a second tmux session.
+
+```bash
+bash scripts/run-all.sh
+```
+
+Reset (kills existing sessions and relaunches):
+
+```bash
+bash scripts/run-all.sh --reset
+```
+
+Tmux sessions:
+- `Master_slave_project`: virtual ports + slave + master.
+- `Visualizer_project`: gateway + React UI.
+
+Switch sessions with `Ctrl+b` then `)`.
+
+## Manual Run
+
+### 1) Virtual serial ports (Linux)
+```bash
+bash virtual-ports-launch/start-virtual-serial.sh
+```
+
+### 2) Slave
+```bash
+cd SimulatorProject
+dotnet run
+```
+
+### 3) Master
+```bash
+cd SimulationMaster
+dotnet run
+```
+
+### 4) Visualizer gateway
+```bash
+cd Visualizer
+dotnet run
+```
+
+### 5) React UI
+```bash
+cd visualizer-ui
+npm run dev
+```
+
+Open:
+
+```
+http://localhost:5173
+```
+
+The React UI connects to the gateway WebSocket at `ws://localhost:5080/ws`.
+
+## Interactive Master Commands
+- `distance <id>`
+- `pilot`
+- `anchor <id>`
+- `status`
+- `noise <min> <max>`
+- `noise off`
+- `jitter <ms>`
+- `jitter off`
+- `help`
+- `exit`
+
+## Wire Protocol (current)
 Requests (master → slave):
-- `REQ,<id>,GET_DISTANCE,<anchorId>` (id is a UUID string)
-- `REQ,<id>,GET_PILOT_POSITION` (id is a UUID string)
-- `REQ,<id>,GET_ANCHOR_POSITION,<anchorId>` (id is a UUID string)
-- `REQ,<id>,GET_STATUS` (id is a UUID string)
-- `REQ,<id>,SET_NOISE,<min>,<max>` (id is a UUID string)
-- `REQ,<id>,SET_JITTER,<ms>` (id is a UUID string)
+- `REQ,<id>,GET_DISTANCE,<anchorId>`
+- `REQ,<id>,GET_PILOT_POSITION`
+- `REQ,<id>,GET_ANCHOR_POSITION,<anchorId>`
+- `REQ,<id>,GET_STATUS`
+- `REQ,<id>,SET_NOISE,<min>,<max>`
+- `REQ,<id>,SET_JITTER,<ms>`
 
 ACK (slave → master):
-- `ACK,<id>` (id is a UUID string)
+- `ACK,<id>`
 
 Responses (slave → master):
-- `DISTANCE,<id>,<timer>,<distance>,<anchorId>` (id is a UUID string)
-- `PILOT_POSITION,<id>,<timer>,<x>,<y>,<z>` (id is a UUID string)
-- `ANCHOR_POSITION,<id>,<timer>,<anchorId>,<x>,<y>,<z>` (id is a UUID string)
-- `STATUS_PILOT,<id>,<timer>,<x>,<y>,<z>` (id is a UUID string)
-- `STATUS_ANCHOR,<id>,<timer>,<anchorId>,<x>,<y>,<z>` (id is a UUID string)
-- `CONFIG_NOISE,<id>,<min>,<max>` (id is a UUID string)
-- `CONFIG_JITTER,<id>,<ms>` (id is a UUID string)
-
-## Prerequisites
-- .NET 9 SDK
-- `socat` (for virtual serial ports on Linux)
-- Bash (to run the provided script)
+- `DISTANCE,<id>,<timer>,<distance>,<anchorId>`
+- `PILOT_POSITION,<id>,<timer>,<x>,<y>,<z>`
+- `ANCHOR_POSITION,<id>,<timer>,<anchorId>,<x>,<y>,<z>`
+- `STATUS_PILOT,<id>,<timer>,<x>,<y>,<z>`
+- `STATUS_ANCHOR,<id>,<timer>,<anchorId>,<x>,<y>,<z>`
+- `CONFIG_NOISE,<id>,<min>,<max>`
+- `CONFIG_JITTER,<id>,<ms>`
 
 ## Configuration
 
 ### `.env`
-The shared config comes from `.env` or environment variables. The default `.env` in this repo is:
+Default `.env`:
 
 ```ini
 BAUD_RATE = 9600
@@ -70,17 +143,15 @@ VISUALIZER_PORT = 5080
 ```
 
 Notes:
-- `SLAVE_PORT_NAME` and `MASTER_PORT_NAME` must match your serial device names (virtual or physical).
+- `SLAVE_PORT_NAME` and `MASTER_PORT_NAME` must match your serial device names.
 - `PILOT_SPEED_TYPE` supports `mps`, `kph`, or `mph`.
 - `LOGS_PATH` is relative to the process working directory.
-- `ACK_MAX_RETRIES` and `ACK_TIMEOUT_MS` control how long the master waits for ACKs before retrying.
-- `DISTANCE_NOISE_MIN` / `DISTANCE_NOISE_MAX` add uniform noise to distance responses (in the same units as distance).
+- `ACK_MAX_RETRIES` and `ACK_TIMEOUT_MS` control ACK retry behavior.
+- `DISTANCE_NOISE_MIN` / `DISTANCE_NOISE_MAX` add uniform noise to distance responses.
 - `RESPONSE_JITTER_MS` adds random response delay on top of `RESPONSE_DELAY`.
-- Noise simulates sensor error: each distance is adjusted by a random value between `DISTANCE_NOISE_MIN` and `DISTANCE_NOISE_MAX`.
-- Jitter simulates real device variability (processing time, OS scheduling, buffering), so responses are not perfectly uniform.
-- `noise off` (master command) sends `SET_NOISE,0,0` to the slave, which disables distance noise and returns exact distances.
-- `jitter off` (master command) sends `SET_JITTER,0` to the slave, which disables extra random delay.
-- `VISUALIZER_HOST` / `VISUALIZER_PORT` control where the Visualizer gateway serves the WebSocket.
+- `noise off` sends `SET_NOISE,0,0` to the slave.
+- `jitter off` sends `SET_JITTER,0` to the slave.
+- `VISUALIZER_HOST` / `VISUALIZER_PORT` control where the gateway serves the WebSocket.
 - `MIN_RANGE` and `MAX_RANGE` are currently defined but not used by the code.
 
 ### `SimulatorProject/config/SimulationConfig.json`
@@ -97,115 +168,25 @@ Defines initial anchor locations and the pilot position in 3D space:
 }
 ```
 
-## Running locally
+## Output
+- Distance CSV: `LOGS_PATH` + `DISTANCE_CSV_NAME`
+- Positions CSV: `LOGS_PATH` + `POSITIONS_CSV_NAME`
+- Distance CSV header: `Timestamp,RequestId,Timer,Distance,Id`
+- Positions CSV header: `Timestamp,RequestId,Timer,Type,Id,X,Y,Z`
 
-### One command (tmux)
-Use the tmux launcher to start virtual ports, the slave, and the master in one window with splits:
-
-```bash
-bash scripts/run-all.sh
-```
-
-Reset (kills existing session and relaunches):
-
-```bash
-bash scripts/run-all.sh --reset
-```
-
-The tmux layout:
-- Left pane: virtual ports (`socat`)
-- Right top: slave
-- Right bottom: master (interactive input)
-
-### Visualizer (gateway)
-Start the gateway in a separate terminal:
-
-```bash
-cd Visualizer
-dotnet run
-```
-
-The gateway reads the CSV logs and streams updates to WebSocket clients.
-
-### Mock responses (no slave)
-If you want to test the master logging without running the slave, send mock status responses:
+## Mock Responses (no slave)
+Send fake ACK and status lines to test master logging without the simulator.
 
 ```bash
 bash scripts/mock-responses.sh
 ```
 
-You can pass a custom port and request id:
+Custom port and request id:
 
 ```bash
 bash scripts/mock-responses.sh /tmp/ttyV1 mytestid
 ```
 
 Why use this:
-- It lets you test the master CSV parsing and logging without the simulator running.
-- It is useful for debugging the master UI and CSV output format quickly.
-
-How it works:
-- It writes a fake ACK and a few `STATUS_*` lines directly to the master port.
-- The master treats them like real responses and logs them to `positions.log.csv`.
-
-### Or manual running
-
-### 1) Create virtual serial ports (Linux)
-In one terminal:
-
-```bash
-bash virtual-ports-launch/start-virtual-serial.sh
-```
-
-This creates `/tmp/ttyV0` and `/tmp/ttyV1` and keeps the process running.
-
-### 2) Start the slave (SimulatorProject)
-In a second terminal:
-
-```bash
-cd SimulatorProject
-dotnet run
-```
-
-### 3) Start the master (SimulationMaster)
-In a third terminal:
-
-```bash
-cd SimulationMaster
-dotnet run
-```
-
-## Output
-- The slave prints incoming requests and outgoing replies.
-- The master prints each received response and writes CSV rows to:
-  - Distance log: `LOGS_PATH` + `DISTANCE_CSV_NAME`
-  - Positions log: `LOGS_PATH` + `POSITIONS_CSV_NAME`
-- Distance CSV header: `Timestamp,RequestId,Timer,Distance,Id`
-- Positions CSV header: `Timestamp,RequestId,Timer,Type,Id,X,Y,Z`
-
-## Notes and limitations
-- The master is interactive. Use `distance <id>`, `pilot`, `anchor <id>`, `status`, `noise <min> <max>`, and `jitter <ms>` from the console.
-- The slave moves the pilot along the X axis only; adjust `SimulationService.SetNewPilotCordinate` if you want more complex motion.
-- If you run the apps from a different working directory, adjust `LOGS_PATH` and `config/SimulationConfig.json` paths accordingly.
-
-## Visualizer UI (React)
-To run the React frontend (WebSocket client):
-
-```bash
-cd visualizer-ui
-npm run dev
-```
-
-Then open:
-
-```
-http://localhost:5173
-```
-
-The React UI connects to the Visualizer gateway WebSocket at `ws://localhost:5080/ws`.
-Make sure the Visualizer backend is running:
-
-```bash
-cd Visualizer
-dotnet run
-```
+- Test CSV parsing and logging quickly without running the slave.
+- Useful for debugging the master UI and CSV output.
