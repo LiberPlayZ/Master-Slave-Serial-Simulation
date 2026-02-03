@@ -70,12 +70,12 @@ namespace SimulationMaster.services
                 System.Console.WriteLine("Unknown response");
                 return;
             }
-            if (parts[0] == "PILOT_POSITION")
+            if (parts[0] == "PILOT_POSITION" || parts[0] == "STATUS_PILOT")
             {
                 var line = $"{timestamp},{parts[1]},{parts[2]},Pilot,,{parts[3]},{parts[4]},{parts[5]}";
                 File.AppendAllText(_positionsFilePath, line + Environment.NewLine);
             }
-            else if (parts[0] == "ANCHOR_POSITION")
+            else if (parts[0] == "ANCHOR_POSITION" || parts[0] == "STATUS_ANCHOR")
             {
                 if (parts.Length < 7)
                 {

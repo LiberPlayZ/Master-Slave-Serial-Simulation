@@ -26,6 +26,9 @@ namespace SharedConfig
                 ["POSITIONS_CSV_NAME"] = Environment.GetEnvironmentVariable("POSITIONS_CSV_NAME") ?? "positions.log.csv",
                 ["ACK_MAX_RETRIES"] = Environment.GetEnvironmentVariable("ACK_MAX_RETRIES") ?? "3",
                 ["ACK_TIMEOUT_MS"] = Environment.GetEnvironmentVariable("ACK_TIMEOUT_MS") ?? "2000",
+                ["DISTANCE_NOISE_MIN"] = Environment.GetEnvironmentVariable("DISTANCE_NOISE_MIN") ?? "0",
+                ["DISTANCE_NOISE_MAX"] = Environment.GetEnvironmentVariable("DISTANCE_NOISE_MAX") ?? "0",
+                ["RESPONSE_JITTER_MS"] = Environment.GetEnvironmentVariable("RESPONSE_JITTER_MS") ?? "0",
 
 
 

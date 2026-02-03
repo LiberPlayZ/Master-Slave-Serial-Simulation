@@ -44,7 +44,7 @@ namespace SimulatorProject.services
                     {
                         string request = _serialPort.ReadLine().Trim();
                         Console.WriteLine($"Slave received: {request}");
-                        string response = "";
+                        var responses = new List<string>();
                         string time = _timer.GetElapsedTime();
                         if (!request.StartsWith("REQ,"))
                         {
@@ -76,9 +76,24 @@ namespace SimulatorProject.services
                                     return;
                                 }
                                 var anchor = _simulationService.helicopter.GetAnchorById(param);
-                                response = anchor != null
-                                   ? $"DISTANCE,{requestId},{time},{_simulationService.CalaculateDistance(anchor)},{param}"
-                                   : $"DISTANCE,{requestId},{time},NA,{param}";
+                                if (anchor != null)
+                                {
+                                    double noiseMin = ConfigManager.GetDouble("DISTANCE_NOISE_MIN");
+                                    double noiseMax = ConfigManager.GetDouble("DISTANCE_NOISE_MAX");
+                                    if (noiseMin > noiseMax)
+                                    {
+                                        var temp = noiseMin;
+                                        noiseMin = noiseMax;
+                                        noiseMax = temp;
+                                    }
+                                    double noise = noiseMin + (Random.Shared.NextDouble() * (noiseMax - noiseMin));
+                                    double distance = _simulationService.CalaculateDistance(anchor) + noise;
+                                    responses.Add($"DISTANCE,{requestId},{time},{distance},{param}");
+                                }
+                                else
+                                {
+                                    responses.Add($"DISTANCE,{requestId},{time},NA,{param}");
+                                }
                                 break;
 
                             case SerialCommand.GET_PILOT_POSITION:
@@ -88,7 +103,7 @@ namespace SimulatorProject.services
                                     DirectionType.BACKWARD);
 
                                 var point = _simulationService.GetPilotPoint();
-                                response = $"PILOT_POSITION,{requestId},{time},{point.X},{point.Y},{point.Z}";
+                                responses.Add($"PILOT_POSITION,{requestId},{time},{point.X},{point.Y},{point.Z}");
                                 break;
 
                             case SerialCommand.GET_ANCHOR_POSITION:
@@ -98,9 +113,21 @@ namespace SimulatorProject.services
                                     return;
                                 }
                                 var anchorPosition = _simulationService.helicopter.GetAnchorById(param);
-                                response = anchorPosition != null
+                                responses.Add(anchorPosition != null
                                     ? $"ANCHOR_POSITION,{requestId},{time},{anchorPosition.Id},{anchorPosition.point.X},{anchorPosition.point.Y},{anchorPosition.point.Z}"
-                                    : $"ANCHOR_POSITION,{requestId},{time},{param},NA,NA,NA";
+                                    : $"ANCHOR_POSITION,{requestId},{time},{param},NA,NA,NA");
+                                break;
+                            case SerialCommand.GET_STATUS:
+                                _simulationService.SetNewPilotCordinate(
+                                    _timer.GetTimePassFromLast(),
+                                    CordinateType.X,
+                                    DirectionType.BACKWARD);
+                                var pilotPoint = _simulationService.GetPilotPoint();
+                                responses.Add($"STATUS_PILOT,{requestId},{time},{pilotPoint.X},{pilotPoint.Y},{pilotPoint.Z}");
+                                foreach (var statusAnchor in _simulationService.helicopter.anchors)
+                                {
+                                    responses.Add($"STATUS_ANCHOR,{requestId},{time},{statusAnchor.Id},{statusAnchor.point.X},{statusAnchor.point.Y},{statusAnchor.point.Z}");
+                                }
                                 break;
 
                             default:
@@ -108,8 +135,18 @@ namespace SimulatorProject.services
                                 break;
                         }
 
-                        await Task.Delay(TimeSpan.FromMilliseconds(ConfigManager.GetDouble("RESPONSE_DELAY")));
-                        sp.WriteLine(response);
+                        double baseDelay = ConfigManager.GetDouble("RESPONSE_DELAY");
+                        double jitterMax = ConfigManager.GetDouble("RESPONSE_JITTER_MS");
+                        if (jitterMax < 0)
+                        {
+                            jitterMax = 0;
+                        }
+                        double jitter = Random.Shared.NextDouble() * jitterMax;
+                        await Task.Delay(TimeSpan.FromMilliseconds(baseDelay + jitter));
+                        foreach (var response in responses)
+                        {
+                            sp.WriteLine(response);
+                        }
                         _timer.SetLastTimer();
 
 

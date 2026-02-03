@@ -35,25 +35,6 @@ namespace SimulationMaster.services
 
 
 
-        private string CreateGetDistanceRequest(string anchorId)
-        {
-            return $"{SharedConfig.SerialCommand.GET_DISTANCE.ToWireString()}:{anchorId}";
-        }
-
-        private string CreateGetPilotPositionRequest()
-        {
-            return SharedConfig.SerialCommand.GET_PILOT_POSITION.ToWireString();
-
-        }
-
-        private string CreateGetAnchorPositionRequest(string anchorId)
-        {
-            return $"{SerialCommand.GET_ANCHOR_POSITION.ToWireString()}:{anchorId}";
-
-        }
-
-
-
         private string? BuildPayloadFromInput(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -74,6 +55,9 @@ namespace SimulationMaster.services
                 case "anchor":
                     if (parts.Length < 2) return null;
                     return $"GET_ANCHOR_POSITION,{parts[1]}";
+
+                case "status":
+                    return "GET_STATUS";
 
                 case "help":
                     return "HELP";
@@ -131,7 +115,8 @@ namespace SimulationMaster.services
                     }
                     return;
                 }
-                if (response.StartsWith("PILOT_POSITION,") || response.StartsWith("ANCHOR_POSITION,"))
+                if (response.StartsWith("PILOT_POSITION,") || response.StartsWith("ANCHOR_POSITION,") ||
+                    response.StartsWith("STATUS_PILOT,") || response.StartsWith("STATUS_ANCHOR,"))
                 {
                     _csvService.LogPosition(response);
                 }
@@ -152,7 +137,7 @@ namespace SimulationMaster.services
             {
                 this._serialPort.Open();
                 this._serialPort.DataReceived += OnDataReceived;
-                Console.WriteLine("Enter commands: distance <id>, pilot, anchor <id>, help, exit");
+                Console.WriteLine("Enter commands: distance <id>, pilot, anchor <id>, status, help, exit");
                 while (true)
                 {
                     var input = Console.ReadLine();
@@ -165,13 +150,13 @@ namespace SimulationMaster.services
 
                     if (payload == "HELP")
                     {
-                        Console.WriteLine("Commands: distance <id>, pilot, anchor <id>, exit");
+                        Console.WriteLine("Commands: distance <id>, pilot, anchor <id>, status, exit");
                         continue;
                     }
 
                     if (payload == null)
                     {
-                        Console.WriteLine("Unknown command. Try: distance <id>, pilot, anchor <id>");
+                        Console.WriteLine("Unknown command. Try: distance <id>, pilot, anchor <id>, status");
                         continue;
                     }
 

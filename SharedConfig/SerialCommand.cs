@@ -7,7 +7,8 @@ namespace SharedConfig
     {
         GET_DISTANCE,
         GET_PILOT_POSITION,
-        GET_ANCHOR_POSITION
+        GET_ANCHOR_POSITION,
+        GET_STATUS
     }
 
     public static class SerialCommandExtensions
@@ -19,6 +20,7 @@ namespace SharedConfig
                 SerialCommand.GET_DISTANCE => "GET_DISTANCE",
                 SerialCommand.GET_PILOT_POSITION => "GET_PILOT_POSITION",
                 SerialCommand.GET_ANCHOR_POSITION => "GET_ANCHOR_POSITION",
+                SerialCommand.GET_STATUS => "GET_STATUS",
                 _ => "UNKNOWN"
             };
         }
@@ -35,6 +37,9 @@ namespace SharedConfig
                     return true;
                 case "GET_ANCHOR_POSITION":
                     command = SerialCommand.GET_ANCHOR_POSITION;
+                    return true;
+                case "GET_STATUS":
+                    command = SerialCommand.GET_STATUS;
                     return true;
                 default:
                     command = default;
