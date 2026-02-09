@@ -20,6 +20,10 @@ obj/
 # Logs
 *.log
 
+# CSV
+*.csv
+
+
 # OS-specific
 .DS_Store
 Thumbs.db
@@ -60,6 +64,7 @@ publish/
 global.json.lock
 
 
-SimulationMaster/logs/# Frontend
+SimulationMaster/logs/
+# Frontend
 visualizer-ui/node_modules/
 visualizer-ui/dist/
