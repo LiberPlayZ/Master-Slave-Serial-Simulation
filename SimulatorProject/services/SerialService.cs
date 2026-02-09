@@ -52,26 +52,27 @@ namespace SimulatorProject.services
                         Console.WriteLine($"Slave received: {request}");
                         var responses = new List<string>();
                         string time = _timer.GetElapsedTime();
-                        if (!request.StartsWith("REQ,"))
+                        var parsed = WireProtocol.ParseRequest(request);
+                        if (parsed.Status == WireRequestParseStatus.BadRequest)
                         {
                             sp.WriteLine("BAD_REQUEST");
                             return;
                         }
-                        string[] reqParts = request.Split(',', 4);
-                        if (reqParts.Length < 3)
+                        if (parsed.Status == WireRequestParseStatus.UnknownCommand)
                         {
-                            sp.WriteLine("BAD_REQUEST");
-                            return;
-                        }
-                        string requestId = reqParts[1];
-                        string commandText = reqParts[2];
-                        string? param = reqParts.Length > 3 ? reqParts[3] : null;
-                        if (!SerialCommandExtensions.TryParseWireString(commandText, out var command))
-                        {
-                            sp.WriteLine($"ACK,{requestId}");
+                            if (!string.IsNullOrWhiteSpace(parsed.RequestId))
+                            {
+                                sp.WriteLine($"ACK,{parsed.RequestId}");
+                            }
                             sp.WriteLine("UNKNOWN_COMMAND");
                             return;
                         }
+
+                        var wireRequest = parsed.Request!;
+                        string requestId = wireRequest.RequestId;
+                        string? param = wireRequest.Param;
+                        var command = wireRequest.Command;
+
                         sp.WriteLine($"ACK,{requestId}");
                         switch (command)
                         {

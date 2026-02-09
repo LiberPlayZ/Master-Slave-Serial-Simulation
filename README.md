@@ -83,6 +83,13 @@ http://localhost:5173
 
 The React UI connects to the gateway WebSocket at `ws://localhost:5080/ws`.
 
+## Tests
+Run the automated protocol tests:
+
+```bash
+dotnet test serial-sim.sln
+```
+
 ## Interactive Master Commands
 - `distance <id>`
 - `pilot`
