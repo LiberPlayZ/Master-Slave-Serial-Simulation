@@ -55,11 +55,13 @@ namespace SimulatorProject.services
                         var parsed = WireProtocol.ParseRequest(request);
                         if (parsed.Status == WireRequestParseStatus.BadRequest)
                         {
+                            Console.WriteLine($"Bad request: {request}");
                             sp.WriteLine("BAD_REQUEST");
                             return;
                         }
                         if (parsed.Status == WireRequestParseStatus.UnknownCommand)
                         {
+                            Console.WriteLine($"Unknown command: {request}");
                             if (!string.IsNullOrWhiteSpace(parsed.RequestId))
                             {
                                 sp.WriteLine($"ACK,{parsed.RequestId}");
@@ -79,6 +81,7 @@ namespace SimulatorProject.services
                             case SerialCommand.GET_DISTANCE:
                                 if (string.IsNullOrWhiteSpace(param))
                                 {
+                                    Console.WriteLine($"Missing anchor id for distance request {requestId}");
                                     sp.WriteLine("MISSING_ID");
                                     return;
                                 }
@@ -99,6 +102,7 @@ namespace SimulatorProject.services
                                 }
                                 else
                                 {
+                                    Console.WriteLine($"Anchor not found: {param}");
                                     responses.Add($"DISTANCE,{requestId},{time},NA,{param}");
                                 }
                                 break;
@@ -116,6 +120,7 @@ namespace SimulatorProject.services
                             case SerialCommand.GET_ANCHOR_POSITION:
                                 if (string.IsNullOrWhiteSpace(param))
                                 {
+                                    Console.WriteLine($"Missing anchor id for anchor position request {requestId}");
                                     sp.WriteLine("MISSING_ID");
                                     return;
                                 }
@@ -139,6 +144,7 @@ namespace SimulatorProject.services
                             case SerialCommand.SET_NOISE:
                                 if (string.IsNullOrWhiteSpace(param))
                                 {
+                                    Console.WriteLine($"Missing noise params for request {requestId}");
                                     sp.WriteLine("MISSING_PARAMS");
                                     return;
                                 }
@@ -147,6 +153,7 @@ namespace SimulatorProject.services
                                     !double.TryParse(noiseParts[0], out var minNoise) ||
                                     !double.TryParse(noiseParts[1], out var maxNoise))
                                 {
+                                    Console.WriteLine($"Bad noise params for request {requestId}: {param}");
                                     sp.WriteLine("BAD_PARAMS");
                                     return;
                                 }
@@ -158,6 +165,7 @@ namespace SimulatorProject.services
                                 if (string.IsNullOrWhiteSpace(param) ||
                                     !double.TryParse(param, out var jitterMs))
                                 {
+                                    Console.WriteLine($"Bad jitter param for request {requestId}: {param}");
                                     sp.WriteLine("BAD_PARAMS");
                                     return;
                                 }

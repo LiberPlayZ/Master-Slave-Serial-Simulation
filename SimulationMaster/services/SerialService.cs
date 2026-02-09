@@ -101,9 +101,9 @@ namespace SimulationMaster.services
                 {
                     return;
                 }
-                Console.WriteLine($"No ACK for request {requestId}, retrying...");
+                Console.WriteLine($"No ACK for request {requestId} (attempt {attempt}/{maxRetries}), retrying...");
             }
-            Console.WriteLine("Failed to receive ACK after retries.");
+            Console.WriteLine($"Failed to receive ACK after {maxRetries} attempts.");
         }
 
 
@@ -113,23 +113,24 @@ namespace SimulationMaster.services
             try
             {
                 string response = port.ReadLine();
-                if (response.StartsWith("ACK,"))
+                if (WireProtocol.TryParseAck(response, out var ackId))
                 {
-                    var parts = response.Split(',', 2);
-                    if (parts.Length == 2)
+                    TaskCompletionSource<string>? tcs = null;
+                    bool matched = false;
+                    lock (_ackLock)
                     {
-                        string ackId = parts[1];
-                        TaskCompletionSource<string>? tcs = null;
-                        lock (_ackLock)
+                        if (_pendingAckId == ackId)
                         {
-                            if (_pendingAckId == ackId)
-                            {
-                                tcs = _ackTcs;
-                                _ackTcs = null;
-                            }
+                            matched = true;
+                            tcs = _ackTcs;
+                            _ackTcs = null;
                         }
-                        tcs?.TrySetResult(ackId);
                     }
+                    if (!matched)
+                    {
+                        Console.WriteLine($"Received ACK for unexpected request id: {ackId}");
+                    }
+                    tcs?.TrySetResult(ackId);
                     return;
                 }
                 if (response.StartsWith("STATUS_PILOT,") || response.StartsWith("STATUS_ANCHOR,"))
@@ -145,6 +146,10 @@ namespace SimulationMaster.services
                 {
                     this._csvService.LogDistance(response);
                 }
+                else
+                {
+                    Console.WriteLine($"Unknown response format: {response}");
+                }
 
                 Console.WriteLine($"[Master] Received: {response}");
 
@@ -158,6 +163,8 @@ namespace SimulationMaster.services
             {
                 this._serialPort.Open();
                 this._serialPort.DataReceived += OnDataReceived;
+                Console.WriteLine($"Master port: {_serialPort.PortName} @ {_serialPort.BaudRate} baud");
+                Console.WriteLine($"ACK timeout: {_timeoutMs}ms, max retries: {_maxRetries}");
                 Console.WriteLine("Enter commands: distance <id>, pilot, anchor <id>, status, noise <min> <max>, jitter <ms>, help, exit");
                 while (true)
                 {

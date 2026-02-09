@@ -54,7 +54,7 @@ namespace SimulationMaster.services
             var parts = response.Split(',');
             if (parts.Length < 5 || parts[0] != "DISTANCE")
             {
-                System.Console.WriteLine("Unknown distance response");
+                System.Console.WriteLine($"Unknown distance response: {response}");
                 return;
             }
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
@@ -67,7 +67,7 @@ namespace SimulationMaster.services
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             if (parts.Length < 6)
             {
-                System.Console.WriteLine("Unknown response");
+                System.Console.WriteLine($"Unknown position response: {response}");
                 return;
             }
             if (parts[0] == "PILOT_POSITION" || parts[0] == "STATUS_PILOT")
@@ -79,7 +79,7 @@ namespace SimulationMaster.services
             {
                 if (parts.Length < 7)
                 {
-                    System.Console.WriteLine("Unknown response");
+                    System.Console.WriteLine($"Unknown position response: {response}");
                     return;
                 }
                 var line = $"{timestamp},{parts[1]},{parts[2]},Anchor,{parts[3]},{parts[4]},{parts[5]},{parts[6]}";
@@ -87,7 +87,7 @@ namespace SimulationMaster.services
             }
             else
             {
-                System.Console.WriteLine("Unknown response");
+                System.Console.WriteLine($"Unknown position response: {response}");
                 return;
             }
         }

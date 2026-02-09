@@ -69,6 +69,12 @@ cd Visualizer
 dotnet run
 ```
 
+Health check:
+
+```
+http://localhost:5080/health
+```
+
 ### 5) React UI
 ```bash
 cd visualizer-ui
