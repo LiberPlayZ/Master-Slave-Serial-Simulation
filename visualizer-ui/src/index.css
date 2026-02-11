@@ -1,3 +1,7 @@
-:root {
-  font-family: "Segoe UI", Tahoma, sans-serif;
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
 }

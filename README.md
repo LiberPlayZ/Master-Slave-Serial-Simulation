@@ -89,6 +89,12 @@ http://localhost:5173
 
 The React UI connects to the gateway WebSocket at `ws://localhost:5080/ws`.
 
+UI features:
+- Live/Replay controls (pause live stream, replay buffered data)
+- CSV export for distance and positions
+- CSV upload for replay (distance/positions logs)
+- TypeScript + TSX components
+
 ## Tests
 Run the automated protocol tests:
 

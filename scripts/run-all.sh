@@ -36,10 +36,12 @@ tmux send-keys -t "$SESSION_NAME":0 "bash \"$ROOT_DIR/scripts/start-virtual-seri
 tmux split-window -h -t "$SESSION_NAME":0
 tmux split-window -v -t "$SESSION_NAME":0.1
 tmux send-keys -t "$SESSION_NAME":0.1 "cd \"$ROOT_DIR/SimulatorProject\" && dotnet run" C-m
+sleep 1
 tmux send-keys -t "$SESSION_NAME":0.2 "cd \"$ROOT_DIR/SimulationMaster\" && dotnet run" C-m
 tmux select-pane -t "$SESSION_NAME":0.2
 
 tmux new-session -d -s "$VISUALIZER_SESSION" -n "visualizer"
+sleep 2
 tmux send-keys -t "$VISUALIZER_SESSION":0 "cd \"$ROOT_DIR/Visualizer\" && dotnet run" C-m
 tmux split-window -v -t "$VISUALIZER_SESSION":0
 tmux send-keys -t "$VISUALIZER_SESSION":0.1 "cd \"$ROOT_DIR/visualizer-ui\" && npm run dev" C-m
