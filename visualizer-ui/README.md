@@ -16,3 +16,5 @@ http://localhost:5173
 ## Notes
 - Uses TypeScript + TSX components.
 - Live WebSocket data comes from the Visualizer gateway at `ws://localhost:5080/ws`.
+- Configure the gateway base URL in `visualizer-ui/.env` via `VITE_GATEWAY_URL`.
+- Use `visualizer-ui/.env.example` as a template.

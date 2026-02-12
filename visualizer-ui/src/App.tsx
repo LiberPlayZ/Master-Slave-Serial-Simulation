@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import AppHeader from "./components/AppHeader";
 import DistanceChart from "./components/DistanceChart";
@@ -10,15 +10,18 @@ import ExportControls from "./components/ExportControls";
 import StreamControls from "./components/StreamControls";
 import ReplayUpload from "./components/ReplayUpload";
 import { buildDistanceCsv, buildPositionsCsv, downloadCsv } from "./formatters/csvExport";
-import { isDistanceMessage, isPositionMessage } from "./models/stream";
-import type { StreamMessage } from "./models/stream";
+import { getGatewayBaseUrl, getGatewayWsUrl } from "./config/gateway";
+import { useReplay } from "./hooks/useReplay";
+import { useTelemetryData } from "./hooks/useTelemetryData";
+import { useVisualizerConfig } from "./hooks/useVisualizerConfig";
 import { useWebSocket } from "./services/useWebSocket";
 import { parseCsvMessages } from "./utils/csvParse";
 
 const MAX_SERIES_SAMPLES = 200;
 
 export default function App() {
-  const wsUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://localhost:5080/ws`;
+  const gatewayBaseUrl = getGatewayBaseUrl();
+  const wsUrl = getGatewayWsUrl();
 
   const [livePaused, setLivePaused] = useState(false);
   const { status, messages, lastMessageAt } = useWebSocket(wsUrl, { paused: livePaused });
@@ -27,132 +30,39 @@ export default function App() {
   const [positionRole, setPositionRole] = useState("all");
   const [positionId, setPositionId] = useState("");
 
-  const [replayEnabled, setReplayEnabled] = useState(false);
-  const [replayPlaying, setReplayPlaying] = useState(false);
-  const [replaySpeed, setReplaySpeed] = useState(1);
-  const [replayCursor, setReplayCursor] = useState(0);
-  const [replayMessages, setReplayMessages] = useState<StreamMessage[]>([]);
+  const replay = useReplay(messages);
+  const config = useVisualizerConfig(gatewayBaseUrl);
 
-  const activeSource = replayMessages.length > 0 ? replayMessages : messages;
-
-  useEffect(() => {
-    if (!replayEnabled) {
-      setReplayPlaying(false);
-      setReplayCursor(activeSource.length);
-      return;
-    }
-    setReplayCursor(0);
-    setReplayPlaying(true);
-  }, [replayEnabled, activeSource.length]);
+  const telemetry = useTelemetryData(replay.activeMessages, {
+    selectedAnchors,
+    positionRole,
+    positionId,
+    maxSeriesSamples: MAX_SERIES_SAMPLES,
+  });
 
   useEffect(() => {
-    if (!replayEnabled || !replayPlaying) return;
-
-    const step = Math.max(1, Math.ceil(replaySpeed * 2));
-    const interval = setInterval(() => {
-      setReplayCursor((current) => Math.min(current + step, activeSource.length));
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [replayEnabled, replayPlaying, replaySpeed, activeSource.length]);
-
-  useEffect(() => {
-    if (replayEnabled && replayCursor >= activeSource.length) {
-      setReplayPlaying(false);
-    }
-  }, [replayEnabled, replayCursor, activeSource.length]);
-
-  const activeMessages = useMemo(() => {
-    if (!replayEnabled) return activeSource;
-    return activeSource.slice(0, replayCursor);
-  }, [activeSource, replayEnabled, replayCursor]);
-
-  const distanceMessages = useMemo(
-    () => activeMessages.filter(isDistanceMessage).filter((msg) => msg.distance !== null),
-    [activeMessages]
-  );
-
-  const positionMessages = useMemo(
-    () => activeMessages.filter(isPositionMessage),
-    [activeMessages]
-  );
-
-  const anchorOptions = useMemo(() => {
-    const anchors = new Set<string>();
-    distanceMessages.forEach((msg) => anchors.add(msg.anchorId));
-    return Array.from(anchors).sort();
-  }, [distanceMessages]);
-
-  useEffect(() => {
-    setSelectedAnchors((current) => current.filter((anchor) => anchorOptions.includes(anchor)));
-  }, [anchorOptions]);
-
-  const distanceSeries = useMemo(() => {
-    const seriesMap = new Map<string, Array<{ value: number; requestId: string; receivedAt: Date }>>();
-
-    distanceMessages.forEach((msg) => {
-      const entry = seriesMap.get(msg.anchorId) ?? [];
-      entry.push({ value: msg.distance ?? 0, requestId: msg.requestId, receivedAt: msg.receivedAt });
-      seriesMap.set(msg.anchorId, entry);
-    });
-
-    return Array.from(seriesMap.entries()).map(([anchorId, points]) => ({
-      anchorId,
-      points: points.slice(-MAX_SERIES_SAMPLES),
-    }));
-  }, [distanceMessages]);
-
-  const latestDistance = distanceMessages.at(-1);
-
-  const positions = useMemo(() => {
-    const map = new Map<string, PositionMessage>();
-    positionMessages.forEach((msg) => {
-      const key = `${msg.role}-${msg.id ?? ""}`;
-      map.set(key, msg);
-    });
-    return Array.from(map.values()).sort((a, b) =>
-      a.role.localeCompare(b.role) || (a.id ?? "").localeCompare(b.id ?? "")
-    );
-  }, [positionMessages]);
-
-  const filteredPositions = useMemo(() => {
-    return positions.filter((row) => {
-      if (positionRole !== "all" && row.role !== positionRole) return false;
-      if (positionId && !String(row.id ?? "").includes(positionId)) return false;
-      return true;
-    });
-  }, [positions, positionRole, positionId]);
-
-  const visibleDistanceMessages = useMemo(() => {
-    if (selectedAnchors.length === 0) return distanceMessages;
-    return distanceMessages.filter((msg) => selectedAnchors.includes(msg.anchorId));
-  }, [distanceMessages, selectedAnchors]);
-
-  const visibleSeriesCount = useMemo(() => {
-    if (selectedAnchors.length === 0) return distanceSeries.length;
-    return distanceSeries.filter((item) => selectedAnchors.includes(item.anchorId)).length;
-  }, [distanceSeries, selectedAnchors]);
-
-  const lastDistanceAt = latestDistance?.receivedAt ?? null;
-  const lastPositionAt = positionMessages.at(-1)?.receivedAt ?? null;
+    setSelectedAnchors((current) => current.filter((anchor) => telemetry.anchorOptions.includes(anchor)));
+  }, [telemetry.anchorOptions]);
 
   const latestDistanceLabel =
-    latestDistance && latestDistance.distance !== null
-      ? `${latestDistance.distance.toFixed(3)} m`
+    telemetry.latestDistance && telemetry.latestDistance.distance !== null
+      ? `${telemetry.latestDistance.distance.toFixed(3)} m`
       : "n/a";
 
   const summary = {
     statusLabel: status.charAt(0).toUpperCase() + status.slice(1),
     lastMessageAt,
     latestDistanceLabel,
-    latestDistanceHint: latestDistance
-      ? `Anchor ${latestDistance.anchorId} · timer ${latestDistance.timer}`
+    latestDistanceHint: telemetry.latestDistance
+      ? `Anchor ${telemetry.latestDistance.anchorId} · timer ${telemetry.latestDistance.timer}`
       : "Waiting for samples",
-    anchorCount: anchorOptions.length,
-    distanceSeriesCount: visibleSeriesCount,
-    positionCount: filteredPositions.length,
-    lastPositionAt,
-    lastDistanceAt,
+    anchorCount: telemetry.anchorOptions.length,
+    distanceSeriesCount: telemetry.visibleSeriesCount,
+    positionCount: telemetry.filteredPositions.length,
+    lastPositionAt: telemetry.lastPositionAt,
+    lastDistanceAt: telemetry.lastDistanceAt,
+    noiseLabel: config.noise,
+    jitterLabel: config.jitter,
   };
 
   const handleToggleAnchor = (anchor: string) => {
@@ -165,21 +75,36 @@ export default function App() {
   };
 
   const handleExportDistances = () => {
-    const csv = buildDistanceCsv(visibleDistanceMessages);
+    const csv = buildDistanceCsv(telemetry.visibleDistanceMessages);
     downloadCsv(`distance-${Date.now()}.csv`, csv);
   };
 
   const handleExportPositions = () => {
-    const csv = buildPositionsCsv(filteredPositions);
+    const csv = buildPositionsCsv(telemetry.filteredPositions);
     downloadCsv(`positions-${Date.now()}.csv`, csv);
   };
 
   const handleLoadFiles = async (files: File[]) => {
     const contents = await Promise.all(files.map((file) => file.text()));
     const parsed = contents.flatMap((content) => parseCsvMessages(content));
-    setReplayMessages(parsed);
-    setReplayEnabled(true);
+    replay.setReplayMessages(parsed);
+    replay.setReplayEnabled(true);
   };
+
+  const handleLoadGateway = async () => {
+    const [distanceCsv, positionsCsv] = await Promise.all([
+      fetch(`${gatewayBaseUrl}/replay/distance`).then((response) => response.text()),
+      fetch(`${gatewayBaseUrl}/replay/positions`).then((response) => response.text()),
+    ]);
+    const parsed = [
+      ...parseCsvMessages(distanceCsv),
+      ...parseCsvMessages(positionsCsv),
+    ];
+    replay.setReplayMessages(parsed);
+    replay.setReplayEnabled(true);
+  };
+
+  const replayTotal = replay.activeSource.length;
 
   return (
     <div className="app">
@@ -188,27 +113,27 @@ export default function App() {
 
       <div className="toolbar">
         <StreamControls
-          replayEnabled={replayEnabled}
-          replayPlaying={replayPlaying}
-          replaySpeed={replaySpeed}
-          replayCursor={replayCursor}
-          replayTotal={activeSource.length}
-          onToggleReplay={() => setReplayEnabled((current) => !current)}
-          onTogglePlay={() => setReplayPlaying((current) => !current)}
-          onReset={() => setReplayCursor(0)}
-          onSpeedChange={setReplaySpeed}
+          replayEnabled={replay.replayEnabled}
+          replayPlaying={replay.replayPlaying}
+          replaySpeed={replay.replaySpeed}
+          replayCursor={replay.replayCursor}
+          replayTotal={replayTotal}
+          onToggleReplay={() => replay.setReplayEnabled((current) => !current)}
+          onTogglePlay={() => replay.setReplayPlaying((current) => !current)}
+          onReset={() => replay.setReplayCursor(0)}
+          onSpeedChange={replay.setReplaySpeed}
           livePaused={livePaused}
           onToggleLivePause={() => setLivePaused((current) => !current)}
         />
         <ExportControls
           onExportDistances={handleExportDistances}
           onExportPositions={handleExportPositions}
-          disabled={distanceMessages.length === 0 && positionMessages.length === 0}
+          disabled={telemetry.distanceMessages.length === 0 && telemetry.positionMessages.length === 0}
         />
       </div>
 
       <div className="toolbar">
-        <ReplayUpload onLoadFiles={handleLoadFiles} disabled={false} />
+        <ReplayUpload onLoadFiles={handleLoadFiles} onLoadGateway={handleLoadGateway} disabled={false} />
       </div>
 
       <main className="layout">
@@ -217,7 +142,7 @@ export default function App() {
           subtitle="Streaming range measurements grouped by anchor"
           actions={
             <Filters
-              anchorOptions={anchorOptions}
+              anchorOptions={telemetry.anchorOptions}
               selectedAnchors={selectedAnchors}
               onToggleAnchor={handleToggleAnchor}
               onClearAnchors={() => setSelectedAnchors([])}
@@ -229,24 +154,24 @@ export default function App() {
           }
         >
           <DistanceChart
-            series={distanceSeries}
-            anchors={anchorOptions}
+            series={telemetry.distanceSeries}
+            anchors={telemetry.anchorOptions}
             activeAnchors={selectedAnchors}
             onToggleAnchor={handleToggleAnchor}
           />
           <div className="chart-meta">
             <span>
-              Latest: {latestDistance && latestDistance.distance !== null
-                ? `${latestDistance.distance.toFixed(3)} (anchor ${latestDistance.anchorId})`
+              Latest: {telemetry.latestDistance && telemetry.latestDistance.distance !== null
+                ? `${telemetry.latestDistance.distance.toFixed(3)} (anchor ${telemetry.latestDistance.anchorId})`
                 : "n/a"}
             </span>
-            <span>Series: {visibleSeriesCount}</span>
-            <span>Samples: {visibleDistanceMessages.length}</span>
+            <span>Series: {telemetry.visibleSeriesCount}</span>
+            <span>Samples: {telemetry.visibleDistanceMessages.length}</span>
           </div>
         </SectionCard>
 
         <SectionCard title="Positions" subtitle="Most recent location per role and id">
-          <PositionsTable rows={filteredPositions} />
+          <PositionsTable rows={telemetry.filteredPositions} />
         </SectionCard>
       </main>
     </div>

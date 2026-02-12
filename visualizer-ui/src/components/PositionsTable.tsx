@@ -1,4 +1,4 @@
-import type { PositionMessage } from "../models/stream";
+import type { PositionMessage } from "../models/streamModels";
 
 interface PositionsTableProps {
   rows: PositionMessage[];

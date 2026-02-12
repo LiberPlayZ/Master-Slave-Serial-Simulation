@@ -1,4 +1,5 @@
 using SharedConfig;
+using Visualizer.Models;
 using Visualizer.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,11 +7,35 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<LogBroadcaster>();
 builder.Services.AddSingleton<LogTailService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<LogTailService>());
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
 
 var app = builder.Build();
+app.UseCors();
 app.UseWebSockets();
 
 app.MapGet("/health", (LogTailService tailService) => Results.Ok(tailService.GetHealthSnapshot()));
+app.MapGet("/config", () => Results.Ok(new VisualizerConfig(
+    ConfigManager.GetDouble("DISTANCE_NOISE_MIN"),
+    ConfigManager.GetDouble("DISTANCE_NOISE_MAX"),
+    ConfigManager.GetDouble("RESPONSE_JITTER_MS"))));
+
+app.MapGet("/replay/distance", async (LogTailService tailService, CancellationToken cancellationToken) =>
+{
+    var csv = await tailService.ReadDistanceCsvAsync(cancellationToken);
+    return Results.Text(csv, "text/csv");
+});
+
+app.MapGet("/replay/positions", async (LogTailService tailService, CancellationToken cancellationToken) =>
+{
+    var csv = await tailService.ReadPositionsCsvAsync(cancellationToken);
+    return Results.Text(csv, "text/csv");
+});
 
 app.Map("/ws", async context =>
 {

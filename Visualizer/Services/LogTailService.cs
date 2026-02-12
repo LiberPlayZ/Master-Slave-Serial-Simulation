@@ -64,6 +64,28 @@ public sealed class LogTailService : BackgroundService
             LastPositionsReadUtc);
     }
 
+    public async Task<string> ReadDistanceCsvAsync(CancellationToken cancellationToken)
+    {
+        return await ReadCsvAsync(_distanceFilePath, cancellationToken);
+    }
+
+    public async Task<string> ReadPositionsCsvAsync(CancellationToken cancellationToken)
+    {
+        return await ReadCsvAsync(_positionsFilePath, cancellationToken);
+    }
+
+    private static async Task<string> ReadCsvAsync(string filePath, CancellationToken cancellationToken)
+    {
+        if (!File.Exists(filePath))
+        {
+            return string.Empty;
+        }
+
+        using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        return await reader.ReadToEndAsync(cancellationToken);
+    }
+
     private async Task<long> ReadNewLinesAsync(string filePath, bool isDistance, long position, CancellationToken stoppingToken)
     {
         if (!File.Exists(filePath))

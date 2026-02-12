@@ -1,4 +1,5 @@
-import type { DistanceMessage, PositionMessage, StreamMessage } from "../models/stream";
+import { StreamMessageType } from "../models/streamType";
+import type { DistanceMessage, PositionMessage, StreamMessage } from "../models/streamModels";
 
 function safeNumber(value: string | undefined): number | null {
   const num = Number(value);
@@ -20,7 +21,7 @@ function parseLine(line: string): string[] {
 function parseDistance(parts: string[]): DistanceMessage | null {
   if (parts.length < 5) return null;
   return {
-    type: "distance",
+    type: StreamMessageType.Distance,
     timestamp: parts[0],
     requestId: parts[1],
     timer: parts[2],
@@ -33,7 +34,7 @@ function parseDistance(parts: string[]): DistanceMessage | null {
 function parsePosition(parts: string[]): PositionMessage | null {
   if (parts.length < 8) return null;
   return {
-    type: "position",
+    type: StreamMessageType.Position,
     timestamp: parts[0],
     requestId: parts[1],
     timer: parts[2],

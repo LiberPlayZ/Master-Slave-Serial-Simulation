@@ -1,4 +1,4 @@
-import type { DistanceMessage, PositionMessage } from "../models/stream";
+import type { DistanceMessage, PositionMessage } from "../models/streamModels";
 
 function escapeValue(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "";

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { normalizeMessage } from "../models/stream";
-import type { StreamMessage } from "../models/stream";
+import { normalizeMessage } from "./streamNormalizer";
+import type { StreamMessage } from "../models/streamModels";
 
 const MAX_SAMPLES = 1200;
 

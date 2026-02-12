@@ -9,6 +9,8 @@ interface SummaryData {
   distanceSeriesCount: number;
   positionCount: number;
   lastPositionAt: Date | null;
+  noiseLabel: string;
+  jitterLabel: string;
 }
 
 interface StatusSummaryProps {
@@ -47,6 +49,16 @@ export default function StatusSummary({ summary }: StatusSummaryProps) {
         label="Positions"
         value={summary.positionCount}
         hint={`Last update ${formatTime(summary.lastPositionAt)}`}
+      />
+      <StatCard
+        label="Noise"
+        value={summary.noiseLabel}
+        hint="Distance noise range"
+      />
+      <StatCard
+        label="Jitter"
+        value={summary.jitterLabel}
+        hint="Response delay variance"
       />
     </section>
   );

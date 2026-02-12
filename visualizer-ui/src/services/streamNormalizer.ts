@@ -1,32 +1,10 @@
-export interface DistanceMessage {
-  type: "distance";
-  timestamp: string;
-  requestId: string;
-  timer: string;
-  distance: number | null;
-  anchorId: string;
-  receivedAt: Date;
-}
-
-export interface PositionMessage {
-  type: "position";
-  timestamp: string;
-  requestId: string;
-  timer: string;
-  role: string;
-  id: string | null;
-  x: number | null;
-  y: number | null;
-  z: number | null;
-  receivedAt: Date;
-}
-
-export type StreamMessage = DistanceMessage | PositionMessage;
+import { StreamMessageType } from "../models/streamType";
+import type { DistanceMessage, PositionMessage, StreamMessage } from "../models/streamModels";
 
 function normalizeDistance(raw: Record<string, unknown>): DistanceMessage {
   const distanceValue = Number(raw.distance);
   return {
-    type: "distance",
+    type: StreamMessageType.Distance,
     timestamp: String(raw.timestamp ?? ""),
     requestId: String(raw.requestId ?? ""),
     timer: String(raw.timer ?? ""),
@@ -41,7 +19,7 @@ function normalizePosition(raw: Record<string, unknown>): PositionMessage {
   const y = Number(raw.y);
   const z = Number(raw.z);
   return {
-    type: "position",
+    type: StreamMessageType.Position,
     timestamp: String(raw.timestamp ?? ""),
     requestId: String(raw.requestId ?? ""),
     timer: String(raw.timer ?? ""),
@@ -58,21 +36,13 @@ export function normalizeMessage(raw: unknown): StreamMessage | null {
   if (!raw || typeof raw !== "object") return null;
   const record = raw as Record<string, unknown>;
 
-  if (record.type === "distance") {
+  if (record.type === StreamMessageType.Distance) {
     return normalizeDistance(record);
   }
 
-  if (record.type === "position") {
+  if (record.type === StreamMessageType.Position) {
     return normalizePosition(record);
   }
 
   return null;
-}
-
-export function isDistanceMessage(message: StreamMessage): message is DistanceMessage {
-  return message.type === "distance";
-}
-
-export function isPositionMessage(message: StreamMessage): message is PositionMessage {
-  return message.type === "position";
 }

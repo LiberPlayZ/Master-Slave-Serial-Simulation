@@ -75,6 +75,19 @@ Health check:
 http://localhost:5080/health
 ```
 
+Replay endpoints:
+
+```
+http://localhost:5080/replay/distance
+http://localhost:5080/replay/positions
+```
+
+Config endpoint:
+
+```
+http://localhost:5080/config
+```
+
 ### 5) React UI
 ```bash
 cd visualizer-ui
@@ -88,12 +101,15 @@ http://localhost:5173
 ```
 
 The React UI connects to the gateway WebSocket at `ws://localhost:5080/ws`.
+Configure the gateway URL via `visualizer-ui/.env` (use `VITE_GATEWAY_URL`).
 
 UI features:
 - Live/Replay controls (pause live stream, replay buffered data)
 - CSV export for distance and positions
 - CSV upload for replay (distance/positions logs)
 - TypeScript + TSX components
+- Load replay directly from gateway logs
+- Dashboard shows noise and jitter settings
 
 ## Tests
 Run the automated protocol tests:
